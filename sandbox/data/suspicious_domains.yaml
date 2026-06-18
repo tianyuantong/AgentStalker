@@ -1,0 +1,74 @@
+# AgentStalker 可疑网络指标库
+# 用于 monitoring/network_monitor.py 与 sandbox/monitoring/_monitors.py
+# Claude Code 可直接 cat / grep 此文件做二次判定
+
+# ============ 可疑 DNS 域名 (out-of-band / 临时解析服务) ============
+suspicious_domains:
+  # OOB 协作平台（攻击者常用来接收 exfil）
+  - nip.io
+  - sslip.io
+  - xip.io
+  - burpcollaborator.net
+  - interactsh.com
+  - interact.sh
+  - oast.fun
+  - oastify.com
+  - canarytokens.com
+  - dnslog.cn
+  - ceye.io
+  - 1u.ms
+  - requestbin.com
+  - pipedream.com
+  - webhook.site
+  - requestcatcher.com
+  - ngrok.io
+  - serveo.net
+  - localtunnel.me
+
+  # 已知 C2 框架默认域名
+  - cobaltstrike.com
+  - meterpreter.com
+
+# ============ 可疑端口 (非业务端口被访问即报警) ============
+suspicious_ports:
+  - 23    # telnet
+  - 135   # RPC
+  - 445   # SMB
+  - 1433  # MSSQL
+  - 3306  # MySQL
+  - 3389  # RDP
+  - 5432  # PostgreSQL
+  - 6379  # Redis
+  - 9200  # Elasticsearch
+  - 11211 # Memcached
+  - 27017 # MongoDB
+
+# ============ 可疑 URL 路径模式 (访问即报警) ============
+suspicious_url_paths:
+  # 云元数据服务 (SSRF 目标)
+  - "/latest/meta-data/"        # AWS IMDS
+  - "/computeMetadata/v1/"      # GCP
+  - "/metadata/instance"        # Azure
+  - "/metadata/v1/"             # DigitalOcean
+  - "/openstack/latest/"        # OpenStack
+  - "/2009-04-04/meta-data/"    # EC2 旧版
+
+  # 内部服务
+  - "/actuator/"                # Spring Boot Actuator
+  - "/_admin/"                  # Rails admin
+  - "/wp-admin/"                # WordPress
+  - "/.env"
+  - "/.git/config"
+  - "/api/internal/"
+
+# ============ 出口白名单 (允许的对外 HTTP) ============
+# 攻击者突破后外联时优先比对
+egress_allowlist:
+  - api.openai.com
+  - api.anthropic.com
+  - generativelanguage.googleapis.com
+  - pypi.org
+  - files.pythonhosted.org
+  - registry.npmjs.org
+  - github.com
+  - objects.githubusercontent.com

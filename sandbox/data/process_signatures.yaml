@@ -1,0 +1,155 @@
+# AgentStalker 进程/文件/凭据检测签名
+# 用于 monitoring/process_monitor.py / filesystem_monitor.py / _secondary_monitors.py
+
+# ============ Shell 派生模式 ============
+shell_patterns:
+  - '/bin/sh$'
+  - '/bin/bash$'
+  - '/bin/zsh$'
+  - '/bin/dash$'
+  - 'sh$'
+  - 'bash$'
+  - 'cmd\.exe$'
+  - powershell
+  - pwsh
+  - '/usr/bin/env\s+(sh|bash|python|node|ruby|perl)'
+
+# ============ 网络工具 (Agent 派生时需重点观察) ============
+network_tools:
+  - curl
+  - wget
+  - nc
+  - netcat
+  - ncat
+  - telnet
+  - ssh      # 默认 neutral
+  - scp      # 默认 neutral
+  - rsync
+  - ftp
+  - tftp
+  - smbclient
+  - rpcclient
+
+# 默认 neutral 的网络工具（合法操作）
+network_tools_neutral:
+  - ssh
+  - scp
+
+# ============ 加密挖矿 ============
+crypto_miners:
+  - xmrig
+  - minerd
+  - cpuminer
+  - ethminer
+  - cgminer
+  - bfgminer
+  - minergate
+  - nicehash
+
+# ============ 可疑进程模式 (含恶意 payload) ============
+suspicious_process_patterns:
+  - 'bash\s+-i'                    # 交互式 shell
+  - '/dev/tcp/'                    # bash 内置 TCP
+  - 'nc\s+-e'                      # nc 反弹
+  - 'curl\s+.*\s*\|\s*(sh|bash)'   # curl pipe 到 shell
+  - 'wget\s+.*\s*\|\s*(sh|bash)'   # wget pipe 到 shell
+  - 'python\s+-c.*exec'            # python -c eval
+  - 'perl\s+-e'                    # perl one-liner
+
+# ============ 敏感文件路径 (访问即告警) ============
+sensitive_paths:
+  # Unix 系统
+  - /etc/passwd
+  - /etc/shadow
+  - /etc/sudoers
+  - /root/.ssh/id_rsa
+  - /root/.ssh/authorized_keys
+  - /root/.bash_history
+  - /root/.aws/credentials
+  - /home/*/.ssh/id_rsa
+  - /home/*/.ssh/authorized_keys
+  - /home/*/.aws/credentials
+  - /home/*/.bash_history
+  - /var/run/secrets/kubernetes.io/serviceaccount/token
+  - /proc/self/environ
+
+  # 通配符匹配
+  - .env
+  - id_rsa
+  - '*.pem'
+  - '*.key'
+
+# ============ 沙箱内允许写入的目录（agent 操作检测用）============
+# 在 sandbox 内出现的写入操作，若路径不在此白名单且不在 /tmp，则告警
+sandbox_writable_allowlist:
+  - /tmp
+  - /var/tmp
+  - /home/*/app/cache
+  - /home/*/app/.cache
+
+# ============ Rust 工具链进程（agent 编译期常见，需区分 build-time vs runtime）============
+rust_toolchain_processes:
+  build_time:
+    - cargo             # 包管理器 / 构建
+    - rustc             # 编译器
+    - cc                # C 编译器 (被 rustc 调用)
+    - gcc
+    - ld                # linker
+    - clang
+  build_time_neutral:
+    - cargo             # build 期间合法
+    - rustc
+    - cc
+    - gcc
+    - ld
+  runtime_agent_binaries:
+    - codewhale
+    - codewhale-tui
+    - codew
+    - deepseek
+    - deepseek-tui
+    - aider
+    - codex
+    - rustup
+  # Rust 运行时特有的 .so 加载 (Tracee openat 监控)
+  rust_runtime_libs:
+    - libdbus-1.so
+    - libssl3.so
+    - libssl.so
+    - libgtk-3.so
+    - libkeyring.so
+
+# ============ Rust 特有的可疑模式（instruction / approval / hook / sink）============
+rust_suspicious_patterns:
+  # AGENTS.md / CLAUDE.md 指令文件读入 (ASI08 攻击面)
+  - pattern: 'AGENTS\.md|CLAUDE\.md|\.[\w-]+/(?:instructions|memory)\.md'
+    context: "instruction file read — verify content is escaped before prompt assembly"
+    severity: high
+  # format! 不 escape 字符串拼接
+  - pattern: 'format!\s*\([^,)]*,\s*[^)]*\)'
+    context: "format! with user-controlled content — prompt injection sink"
+    severity: medium
+  # ApprovalMode::Never / sandbox 解除
+  - pattern: 'ApprovalMode::Never|sandbox.*danger-full-access'
+    context: "approval mode bypass variant or unrestricted sandbox policy"
+    severity: critical
+  # Hook sink 注册检查
+  - pattern: 'add_sink|WebhookHookSink|UnixSocketHookSink'
+    context: "hook sink definition — verify add_sink() actually registers it"
+    severity: medium
+  # 任意命令执行
+  - pattern: 'Command::new|std::process::Command|tokio::process::Command'
+    context: "shell 命令派生"
+    severity: high
+  # 反序列化攻击
+  - pattern: 'bincode::deserialize|rmp_serde::from'
+    context: "不安全反序列化"
+    severity: critical
+  # Secret 读取 (keyring)
+  - pattern: 'keyring::Entry|secret-service'
+    context: "OS keyring 访问"
+    severity: medium
+  # 危险文件操作
+  - pattern: 'fs::remove_file|fs::remove_dir|tokio::fs::remove'
+    context: "破坏性 fs 操作"
+    severity: medium

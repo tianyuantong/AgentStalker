@@ -1,0 +1,175 @@
+# AgentStalker Test Sandbox
+# Stage 3 (VERIFY) Docker 编排
+# 启动: docker compose -f sandbox/docker-compose.test.yml up -d
+# 停止: docker compose -f sandbox/docker-compose.test.yml down -v
+
+version: "3.9"
+
+services:
+  # ============ 被测 Agent ============
+  agent-under-test:
+    build:
+      context: ${AGENT_SOURCE:-./agent}
+      dockerfile: Dockerfile
+    container_name: ast-agent
+    environment:
+      # 强制所有外部依赖指向 mock
+      DATABASE_URL: postgres://testuser:testpass@mock-db:5432/testdb
+      SMTP_HOST: mock-mail
+      SMTP_PORT: 1025
+      EXTERNAL_API_URL: http://mock-api:8080
+      # LLM 调用走 LiteLLM 代理
+      OPENAI_API_BASE: http://llm-proxy:4000
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-sk-test}
+      ANTHROPIC_API_BASE: http://llm-proxy:4000
+      AGENT_MODE: audit
+    depends_on:
+      - mock-db
+      - mock-mail
+      - mock-api
+      - llm-proxy
+    networks:
+      - agent-net
+    # 沙箱限制
+    read_only: false  # Agent 自身需要写入临时文件
+    tmpfs:
+      - /tmp:size=100M,noexec
+    # 网络限制（仅能访问内部服务）
+    # ports:
+    #   - "8000:8000"  # API 暴露给 test-runner
+
+  # ============ LLM 调用代理（LiteLLM） ============
+  llm-proxy:
+    image: ghcr.io/berriai/litellm:main-latest
+    container_name: ast-litellm
+    volumes:
+      - ./litellm_config.yaml:/app/config.yaml
+    ports:
+      - "4000:4000"
+    environment:
+      # 真实 LLM key
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+    networks:
+      - agent-net
+
+  # ============ 监控 sidecar（eBPF / Tracee） ============
+  ebpf-monitor:
+    image: aquasec/tracee:latest
+    container_name: ast-tracee
+    privileged: true
+    pid: host
+    volumes:
+      - /lib/modules:/lib/modules:ro
+      - /usr/src:/usr/src:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./tracee-output:/output
+    command: >
+      --containers
+      --containers-cgroupfile=/var/run/docker.sock
+      --output=json:/output/tracee-events.json
+      --output=forward:http://ebpf-relay:4444
+    networks:
+      - agent-net
+    depends_on:
+      - ebpf-relay
+    cap_add:
+      - SYS_ADMIN
+      - SYS_PTRACE
+
+  ebpf-relay:
+    image: alpine:3.19
+    container_name: ast-ebpf-relay
+    command: ["sh", "-c", "apk add --no-cache nc && nc -lk -p 4444 >> /output/events.log"]
+    volumes:
+      - ./tracee-output:/output
+    networks:
+      - agent-net
+
+  # ============ Mock 服务 ============
+  mock-db:
+    image: postgres:15-alpine
+    container_name: ast-mock-db
+    environment:
+      POSTGRES_DB: testdb
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpass
+    volumes:
+      - ./fixtures/db_init.sql:/docker-entrypoint-initdb.d/init.sql
+      - mock-db-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - agent-net
+
+  mock-mail:
+    image: mailhog/mailhog:latest
+    container_name: ast-mock-mail
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web UI
+    networks:
+      - agent-net
+
+  mock-api:
+    image: wiremock/wiremock:3.5.4
+    container_name: ast-mock-api
+    volumes:
+      - ./fixtures/wiremock:/home/wiremock
+    command: --global-response-templating --verbose
+    ports:
+      - "8080:8080"
+    networks:
+      - agent-net
+
+  # ============ 流量代理（Nginx，记录请求/响应） ============
+  proxy:
+    image: nginx:1.25-alpine
+    container_name: ast-nginx
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - proxy-logs:/var/log/nginx
+    ports:
+      - "8000:8000"  # test-runner 通过此访问 agent
+    depends_on:
+      - agent-under-test
+    networks:
+      - agent-net
+
+  # ============ 测试编排器 ============
+  test-runner:
+    image: python:3.11-slim
+    container_name: ast-test-runner
+    volumes:
+      - ./:/workspace
+      - test-output:/workspace/output
+      - /var/run/docker.sock:/var/run/docker.sock
+    working_dir: /workspace
+    command: ["python", "sandbox/test_runner.py", "--config", "/workspace/attack_graph.json"]
+    environment:
+      DOCKER_HOST: unix:///var/run/docker.sock
+      NGINX_LOG: /var/log/nginx/access.log
+      LITELLM_API: http://llm-proxy:4000
+      MAILHOG_API: http://mock-mail:8025/api/v2/messages
+      WIREMOCK_API: http://mock-api:8080/__admin/requests
+      POSTGRES_URL: postgres://testuser:testpass@mock-db:5432/testdb
+    depends_on:
+      - agent-under-test
+      - llm-proxy
+      - mock-mail
+      - mock-api
+      - ebpf-monitor
+      - proxy
+    networks:
+      - agent-net
+
+volumes:
+  mock-db-data:
+  proxy-logs:
+  test-output:
+
+networks:
+  agent-net:
+    driver: bridge
+    # 不连外网，所有外部 HTTP 走 mock
+    internal: false

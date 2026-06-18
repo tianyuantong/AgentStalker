@@ -1,0 +1,291 @@
+# Race Condition / TOCTOU — Agent 场景适配 Payload 库
+# 适配点：Agent 工具调用并发场景、状态变更操作、限额突破
+
+metadata:
+  source: codeaudit/hack-skills/race-condition
+  scope: agent tool call concurrent execution → state integrity
+  layer: L3_tool_call + L2_memory (状态类) + L5_identity (授权时序)
+  sink_patterns:
+    - "balance - amount (无原子)"
+    - "redeem code (无 idempotency_key)"
+    - "email_verify token (无状态机)"
+    - "API call 并发"
+
+# ============ 1. 核心概念 ============
+core_concept:
+  toctou:
+    description: |
+      Time-of-check to time-of-use — check 与 update 不是原子操作
+    pattern:
+      - "Thread A: CHECK (resource OK)"
+      - "Thread B: CHECK (resource OK) ← 都看到 OK"
+      - "Thread A: USE/UPDATE"
+      - "Thread B: USE/UPDATE ← 重复效果"
+  non_atomic_read_write:
+    vulnerable_pattern: |
+      balance = SELECT balance FROM accounts WHERE id = ?
+      if balance >= amount:
+          UPDATE accounts SET balance = balance - ? WHERE id = ?
+    explanation: "两个并发请求都通过 if 检查（在 UPDATE 提交前）"
+  locking_gaps:
+    application: "内存标志/cache/session 与 DB 不同步"
+    orm_service: "无分布式锁，多实例都认为自己拥有决策权"
+    db: "缺少 SELECT...FOR UPDATE，隔离级别错误"
+    api_gateway: "per-IP 限流是 check-then-increment → 并行爆发通过重复检查"
+
+# ============ 2. 优先测试目标 ============
+priority_targets:
+  one_time_operations:
+    description: 一次性兑换 / 优惠券 / 奖励
+    paths:
+      - "/api/rewards/claim"
+      - "/api/coupon/apply"
+      - "/api/voucher/redeem"
+      - "/api/bonus/activate"
+  balance_quota:
+    description: 余额 / 配额 / 库存扣减
+    paths:
+      - "/api/transfer"
+      - "/api/purchase"
+      - "/api/inventory/reserve"
+  invite_referral:
+    description: 邀请 / 推荐 / 注册奖励
+    paths:
+      - "/api/invite/accept"
+      - "/api/referral/claim"
+  verification:
+    description: 密码 / 邮箱 / MFA 验证
+    paths:
+      - "/api/verify/token"
+      - "/api/email/confirm"
+      - "/api/reset/password"
+  idempotent_apis:
+    description: 没有强 idempotency key 的 POST
+    paths:
+      - "/api/POST that should succeed only once"
+
+# ============ 3. 攻击模式 ============
+attack_patterns:
+  limit_overrun:
+    description: 同一认证请求并行 N 次
+    example: |
+      POST /api/v1/rewards/claim HTTP/1.1
+      Authorization: Bearer <token>
+      Content-Type: application/json
+
+      {"reward_id":"welcome_bonus"}
+    success_signal:
+      - "HTTP 200/201 出现多次"
+      - "重复 ledger 条目"
+      - "余额超过策略上限"
+  rate_limit_bypass:
+    description: |
+      限流如果用 per-request counter 而非 atomic increment，
+      并发爆发可通过
+    example: |
+      POST /api/v1/login HTTP/1.1
+      Content-Type: application/json
+
+      {"email":"victim@example.com","password":"wrong"}
+    technique:
+      - "并行 N 次（vs 串行 N 次）"
+      - "成功信号：失败数 > 文档上限，或锁定从未触发"
+  multi_step:
+    description: |
+      工作流 create → pay → confirm，如果 confirm 不加密绑定 pay 完成，
+      可并行多个 pipeline
+    attack:
+      - "通道 A: create → 准备 pay"
+      - "通道 B: create → 准备 confirm"
+      - "confirm 在 pay 完成前先执行"
+    success_signal: "item marked paid/shipped 但无匹配支付"
+
+# ============ 4. HTTP/1.1 Last-Byte 同步 ============
+http11_last_byte:
+  description: |
+    所有请求保持阻塞（已发送 headers + body-1 字节），
+    然后一起释放最后一字节，让服务端在紧密窗口收到
+  pattern: |
+    Client 1: [headers + body - 1 byte] ----hold----+
+    Client 2: [headers + body - 1 byte] ----hold----+--> flush last byte together
+    Client N: [headers + body - 1 byte] ----hold----+
+  tools:
+    - "Burp Suite - Repeater (Send group parallel)"
+    - "Turbo Intruder gates"
+    - "Raceocat"
+
+# ============ 5. HTTP/2 Single-Packet Attack ============
+http2_single_packet:
+  description: |
+    多路复用多个完整 HTTP/2 streams，合并帧让所有请求首字节在同一 TCP 段发送
+  pattern: |
+    [ Req A stream ]
+    [ Req B stream ]  --HTTP/2-->  one burst -->  app worker pool
+    [ Req C stream ]
+  advantage: "更紧的传输对齐，比 HTTP/1.1 last-byte 窗口更小"
+  tools:
+    - "Burp Repeater (Send group parallel / single-packet)"
+    - "h2spacex"
+
+# ============ 6. Turbo Intruder 模板 ============
+turbo_intruder_templates:
+  same_endpoint_gate:
+    settings:
+      concurrentConnections: 30
+      requestsPerConnection: 30
+      pipeline: false
+      engine: THREADED
+      maxRetriesPerRequest: 0
+    code: |
+      def queueRequests(target, wordlists):
+          engine = RequestEngine(endpoint=target.endpoint,
+                                 concurrentConnections=30,
+                                 requestsPerConnection=30,
+                                 pipeline=False,
+                                 engine=Engine.THREADED,
+                                 maxRetriesPerRequest=0)
+          for i in range(30):
+              engine.queue(target.req, gate='race1')
+          engine.openGate('race1')
+
+      def handleResponse(req, interesting):
+          table.add(req)
+  multi_endpoint_same_gate:
+    description: 1 个 POST + 多个 GET 同时触发
+    code: |
+      def queueRequests(target, wordlists):
+          engine = RequestEngine(endpoint=target.endpoint,
+                                 concurrentConnections=30,
+                                 requestsPerConnection=30,
+                                 pipeline=False,
+                                 engine=Engine.THREADED,
+                                 maxRetriesPerRequest=0)
+          engine.queue(post_to_target1, gate='race1')
+          for _ in range(30):
+              engine.queue(get_target2, gate='race1')
+          engine.openGate('race1')
+  correlation_header:
+    description: |
+      用唯一 x-request 头（Turbo Intruder payload 占位符 %s）做日志关联
+    header: "x-request: %s"
+
+# ============ 7. Agent 场景特化 ============
+agent_specific:
+  description: |
+    Agent 工具调用场景下的并发攻击：
+    1. Agent 工具可能涉及状态变更（转账、扣库存）
+    2. 多 Agent 并行执行可能引发 TOCTOU
+    3. Agent 长会话中 token / email_verify 可能被复用
+  high_risk_tool_patterns:
+    - name: "transfer_funds"
+      severity: critical
+    - name: "claim_reward"
+      severity: high
+    - name: "redeem_coupon"
+      severity: high
+    - name: "verify_email"
+      severity: critical
+    - name: "update_balance"
+      severity: high
+    - name: "deduct_inventory"
+      severity: high
+    - name: "send_invite"
+      severity: medium
+    - name: "reset_password"
+      severity: critical
+    - name: "approve_request"
+      severity: high
+  multi_turn_strategy:
+    turn_1: "询问：'transfer_funds 是否有 idempotency_key？是否有 daily_limit？'"
+    turn_2: "小额度转账：'transfer_funds(amount=10)'"
+    turn_3: "并行 N 次相同请求（HTTP/2 single-packet）"
+    turn_4: "观察是否多次成功（账户被多次扣款）"
+  multi_agent_race:
+    description: |
+      多 Agent 系统（如 AutoGen / CrewAI）中多个 Agent 同时
+      调用同一工具 → 可能 TOCTOU
+    scenario: |
+      - Agent A 和 Agent B 都调用 "approve_request(req_id=X)"
+      - 两个 Agent 都看到 status=pending
+      - 都通过 check，都执行 approve
+      - 重复审批
+  long_session_replay:
+    description: |
+      Agent 长会话（数小时）中，user 可能用同一 token 多次
+      触发 verify_email 等操作
+    attack:
+      - "Token 一次性本应失效"
+      - "Agent 缓存 token 在 context，未撤销"
+      - "重放 → 二次验证通过"
+  tool_call_replay:
+    description: |
+      Agent 工具调用如果是 HTTP API，没有 idempotency_key，
+      网络重试可能重复执行
+    detection:
+      - "搜索工具代码中是否生成 Idempotency-Key"
+      - "搜索是否有 request retry 逻辑"
+
+# ============ 8. 真实案例 ============
+cases:
+  cve_2022_4037:
+    name: "GitLab CE/EE race condition"
+    description: "Email verification forgery via race + OAuth identity provider 影响"
+    cwe: CWE-362
+    technique: "HTTP/2 single-packet timing"
+  starbucks_gift_card:
+    description: "Gift card 余额检查 TOCTOU → 多次消费超过余额"
+  apple_pay:
+    description: "Apple Pay token 一次性但被重放"
+  coupon_double_redeem:
+    description: "优惠券无限次兑换 → 商业损失"
+  inventory_race:
+    description: "限量商品并行下单 → 库存超卖"
+
+# ============ 9. 决策树 ============
+decision_tree:
+  start: "状态变更 API?"
+  no: "停止（无 race 风险）"
+  yes:
+    branch: "类型?"
+    coupon_like:
+      action: "并行相同请求"
+      success_check: "重复成功 → 报告"
+    rate_limit:
+      action: "并行 vs 串行"
+      success_check: "超出文档上限 → 报告"
+    multi_step:
+      action: "并行 pipeline"
+      success_check: "状态错配 → 报告"
+  tool_pick:
+    same_endpoint: "Burp group / h2spacex"
+    ti_gates: "Turbo Intruder gates"
+    multi_pipeline: "Turbo Intruder + trace ID"
+
+# ============ 10. 证据收集 ============
+evidence_checklist:
+  - "可重现：并发下重复成功，非单次重试的随机性"
+  - "服务端 artifact：两行/两邮件/两 grants/错误余额"
+  - "日志关联：x-request 或 unique body 字段"
+  - "trace ID 跨服务关联（如 OpenTelemetry trace_id）"
+
+# ============ 11. 沙箱监控 ============
+sandbox_monitoring:
+  - "同一 trace_id 出现多个完成事件"
+  - "DB 重复 row（unique constraint 缺失）"
+  - "邮件外发多次（同 token）"
+  - "Agent 重试次数异常"
+  - "短时间高并发连接（同一 source IP）"
+
+# ============ 12. 防御要点 ============
+defense:
+  atomic_operations:
+    - "SELECT...FOR UPDATE"
+    - "乐观锁（version 字段）"
+    - "幂等键（Idempotency-Key header）"
+    - "数据库 UNIQUE 约束"
+  isolation_level:
+    - "SERIALIZABLE 隔离"
+    - "分布式锁（Redis/Zookeeper）"
+  api_design:
+    - "限流计数器 atomic increment"
+    - "Token 单次使用（jti claim）"

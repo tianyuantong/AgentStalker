@@ -1,0 +1,170 @@
+# AgentStalker Kubernetes Job
+# 用于在 K8s 集群中执行 Agent 渗透测试
+# 每个测试用例 = 一个 Job，Pod 失败即标记为 vulnerable
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: agent-stalker-test
+  namespace: agent-stalker
+  labels:
+    app: agent-stalker
+    component: test-runner
+spec:
+  backoffLimit: 1
+  ttlSecondsAfterFinished: 3600
+  template:
+    metadata:
+      labels:
+        app: agent-stalker
+        component: test-runner
+      annotations:
+        # 强制所有容器运行在受限 PSP 中
+        container.apparmor.security.beta.kubernetes.io/test-runner: runtime/default
+    spec:
+      serviceAccountName: agent-stalker
+      restartPolicy: Never
+
+      # Pod-level security
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+
+      # 网络策略 - 仅允许访问同 namespace
+      # （需要 NetworkPolicy 资源另行定义）
+
+      containers:
+        # ============ Test Runner ============
+        - name: test-runner
+          image: agent-stalker/runner:latest
+          imagePullPolicy: IfNotPresent
+          workingDir: /workspace
+          command: ["python", "sandbox/test_runner.py"]
+          args: ["--config", "/workspace/attack_graph.json"]
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+          env:
+            - name: AGENT_ENDPOINT
+              value: "http://agent-under-test:8000/chat"
+            - name: LITELLM_API
+              value: "http://llm-proxy:4000"
+            - name: MAILHOG_API
+              value: "http://mock-mail:8025/api/v2/messages"
+            - name: WIREMOCK_API
+              value: "http://mock-api:8080/__admin/requests"
+            - name: POSTGRES_URL
+              valueFrom:
+                secretKeyRef:
+                  name: agent-stalker-secrets
+                  key: postgres-url
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+            - name: evidence
+              mountPath: /workspace/output
+            - name: tracee-events
+              mountPath: /var/log/tracee
+              readOnly: true
+
+        # ============ Sidecar: eBPF (Tracee) ============
+        - name: tracee
+          image: aquasec/tracee:latest
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            privileged: true
+            capabilities:
+              add: ["SYS_ADMIN", "SYS_PTRACE"]
+          command: ["tracee"]
+          args:
+            - "--containers"
+            - "--output=json:/var/log/tracee/events.json"
+            - "--output=forward:http://ebpf-relay:4444"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          volumeMounts:
+            - name: tracee-events
+              mountPath: /var/log/tracee
+
+      volumes:
+        - name: workspace
+          configMap:
+            name: agent-stalker-workspace
+            defaultMode: 0755
+        - name: evidence
+          persistentVolumeClaim:
+            claimName: agent-stalker-evidence
+        - name: tracee-events
+          emptyDir: {}
+
+---
+# ============ Service Account (受限权限) ============
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: agent-stalker
+  namespace: agent-stalker
+automountServiceAccountToken: false
+
+---
+# ============ Network Policy: 严格白名单 ============
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: agent-stalker-isolation
+  namespace: agent-stalker
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # 仅允许同 namespace 通信
+    - from:
+        - podSelector: {}
+      ports:
+        - port: 8000
+        - port: 4000
+        - port: 8025
+        - port: 8080
+  egress:
+    # DNS
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - port: 53
+          protocol: UDP
+    # 内部 mock 服务
+    - to:
+        - podSelector: {}
+      ports:
+        - port: 5432
+        - port: 1025
+        - port: 8080
+        - port: 4000
+        - port: 8000
+    # ⚠️ 关键: 不允许 egress 到外网（除非显式 allowlist）
+    # 若必须访问真实 LLM 需另行加白
+
+---
+# ============ 凭据 Secret ============
+apiVersion: v1
+kind: Secret
+metadata:
+  name: agent-stalker-secrets
+  namespace: agent-stalker
+type: Opaque
+stringData:
+  postgres-url: "postgres://testuser:testpass@mock-db:5432/testdb"

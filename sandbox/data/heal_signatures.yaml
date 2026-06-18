@@ -1,0 +1,247 @@
+# AgentStalker 自愈诊断知识库
+# 用于 heal_diagnose.py 错误模式匹配
+# Claude Code 诊断后**自行决定**是否执行修复动作（不在 Python 中自动执行）
+
+# 修复动作（仅建议，Claude Code 用 Bash 工具执行）
+action_types:
+  edit_dockerfile:     修改 sandbox 内的 agent.Dockerfile
+  edit_compose:        修改 docker-compose.override.yml
+  edit_requirements:   修改 requirements.txt / package.json
+  add_dependency:      添加 pip/npm 依赖
+  add_privileged:      "在 compose 中加 privileged: true"
+  restart_container:   docker restart <container>
+  increase_timeout:    增大 healthcheck/curl timeout
+  recreate_network:    docker network create + 重新连接
+  clean_volumes:       docker volume prune
+  prompt_user:         ⚠️ 硬边界 — 必须询问用户，不可自动
+  abort:               停止并报告
+
+# 错误签名（按 category 分组）
+signatures:
+
+  # ============ 部署阶段 ============
+  - category: build_failed
+    description: "pip 依赖冲突"
+    pattern: "ERROR: failed to solve.*dependency conflicts|ResolutionImpossible"
+    suggested_action: edit_requirements
+    action_param: lock_versions
+    max_retries: 3
+    requires_user: false
+
+  - category: build_failed
+    description: "Dockerfile COPY 路径不存在"
+    pattern: "COPY failed: file not found in build context|COPY.*not found"
+    suggested_action: edit_dockerfile
+    action_param: fix_copy_path
+    max_retries: 2
+    requires_user: false
+
+  - category: missing_dependency
+    description: "Python 模块缺失"
+    pattern: "ModuleNotFoundError: No module named ['\"]([\\w\\.]+)['\"]"
+    suggested_action: add_dependency
+    action_param: extract_from_pattern
+    max_retries: 3
+    requires_user: false
+
+  - category: missing_dependency
+    description: "Node 模块缺失"
+    pattern: "Cannot find module ['\"]([\\w\\.\\-\\/]+)['\"]"
+    suggested_action: edit_requirements
+    action_param: npm_install
+    max_retries: 3
+    requires_user: false
+
+  - category: container_crashed
+    description: "容器启动后立即退出"
+    pattern: "container .* exited \\((\\d+)\\)"
+    suggested_action: restart_container
+    action_param: ""
+    max_retries: 3
+    requires_user: false
+
+  - category: port_conflict
+    description: "端口冲突"
+    pattern: "bind: address already in use|port is already allocated"
+    suggested_action: edit_compose
+    action_param: change_port
+    max_retries: 2
+    requires_user: false
+
+  - category: health_timeout
+    description: "健康检查超时"
+    pattern: "curl.*Connection refused|Connection refused.*localhost"
+    suggested_action: increase_timeout
+    action_param: start_period_30s
+    max_retries: 2
+    requires_user: false
+
+  - category: llm_auth_failed
+    description: "LLM API Key 无效 (401)"
+    pattern: "401 Unauthorized|Invalid API Key|AuthenticationError"
+    suggested_action: prompt_user
+    action_param: check_llm_key
+    max_retries: 0
+    requires_user: true   # ⚠️ 硬边界
+
+  # ============ 攻击阶段 ============
+  - category: agent_500
+    description: "Agent 返回 500"
+    pattern: "HTTP/1.1 500|Internal Server Error"
+    suggested_action: restart_container
+    action_param: ast-agent
+    max_retries: 3
+    requires_user: false
+
+  - category: attack_timeout
+    description: "攻击请求超时"
+    pattern: "curl.*timeout|TimeoutError|Read timed out"
+    suggested_action: increase_timeout
+    action_param: curl_timeout_60s
+    max_retries: 2
+    requires_user: false
+
+  - category: ebpf_permission
+    description: "eBPF 权限不足"
+    pattern: "operation not permitted|EBPF.*permission|capabilities"
+    suggested_action: add_privileged
+    action_param: privileged_true
+    max_retries: 1
+    requires_user: false
+
+  - category: mock_unreachable
+    description: "Mock 服务不可达"
+    pattern: "connection refused.*mock-|could not translate host name.*mock-"
+    suggested_action: increase_timeout
+    action_param: wait_60s_for_mocks
+    max_retries: 2
+    requires_user: false
+
+  # ============ 通用 ============
+  - category: resource_exhausted
+    description: "资源耗尽 (OOM / 磁盘满)"
+    pattern: "no space left on device|OutOfMemory|OOMKilled"
+    suggested_action: prompt_user
+    action_param: free_resources
+    max_retries: 0
+    requires_user: true   # ⚠️ 硬边界
+
+  - category: network_isolation
+    description: "Docker 网络不存在"
+    pattern: "network.*not found|network .* not found"
+    suggested_action: recreate_network
+    action_param: agent-net
+    max_retries: 1
+    requires_user: false
+
+  # ============ Rust 编译/链接错误 ============
+  - category: rust_linker_lib
+    description: "Rust 链接器找不到系统库 (libdbus/openssl/gtk)"
+    pattern: "cannot find -l(\\w+)|linker `cc` not found|undefined reference to .* (dbus|ssl|gtk)"
+    suggested_action: edit_dockerfile
+    action_param: add_system_lib_from_linker_name
+    requires_user: false
+    max_retries: 2
+    hint: |
+      在 Dockerfile builder 阶段添加 lib${name}-dev 包。
+      常见映射: dbus→libdbus-1-dev, ssl→libssl-dev, gtk-3→libgtk-3-dev
+      然后在 runtime 阶段添加对应的运行时包 libdbus-1-3/libssl3/libgtk-3-0
+
+  - category: rust_pkg_config_missing
+    description: "pkg-config 找不到 *.pc 文件"
+    pattern: "pkg-config.*not found|PKG_CONFIG.*failed|Could not find system library|system library .* not found|pkg-config exited with status code"
+    suggested_action: edit_dockerfile
+    action_param: add_pkg_config_libs
+    requires_user: false
+    max_retries: 2
+    hint: |
+      在 Dockerfile builder 阶段安装: pkg-config + 对应 -dev 包
+      e.g. libssl-dev (openssl.pc), libdbus-1-dev (dbus-1.pc)
+
+  - category: rust_openssl_vendored
+    description: "openssl-sys 自动构建失败"
+    pattern: "failed to run custom build command for .*openssl-sys|OpenSSL crate build failed"
+    suggested_action: edit_dockerfile
+    action_param: enable_openssl_vendored_or_install_dev
+    requires_user: false
+    max_retries: 1
+    hint: |
+      两个方案任选其一:
+      1) 在 builder 阶段安装 libssl-dev pkg-config
+      2) 设置环境变量 OPENSSL_VENDORED=1 + 安装 perl (cargo build)
+
+  - category: rust_glibc_mismatch
+    description: "glibc 版本不匹配 (binary 用了更新版 glibc)"
+    pattern: "GLIBC.*not found|version `GLIBC_[\\d.]+' not found"
+    suggested_action: edit_dockerfile
+    action_param: use_bookworm_slim_or_match_glibc
+    requires_user: false
+    max_retries: 1
+    hint: |
+      runtime 镜像需与 builder 同系列。推荐: rust:1.88-slim-bookworm → debian:bookworm-slim
+      或显式 rust:1.88-slim + debian:bookworm-slim
+
+  - category: rust_cargo_not_found
+    description: "cargo / rustc 命令不存在"
+    pattern: "cargo: not found|rustc: not found|'/cargo'.*not found|cannot find crate for `?std`?|error\\[E0463\\]"
+    suggested_action: edit_dockerfile
+    action_param: use_rust_official_image
+    requires_user: false
+    max_retries: 1
+    hint: |
+      builder 镜像必须用 rust:1.88-slim-bookworm (官方) 或 rust:1-slim。
+      不要用 rust:alpine — 链接 musl 经常破坏 reqwest/openssl。
+      E0463 通常是 rust-toolchain.toml 指定版本未安装 — 删除或 sync。
+
+  - category: rust_workspace_member
+    description: "Cargo.toml workspace member 找不到"
+    pattern: "package .* not found in workspace|workspace member .* not found|couldn't find `?(\\w+)`?"
+    suggested_action: edit_dockerfile
+    action_param: copy_all_workspace_members
+    requires_user: false
+    max_retries: 1
+    hint: |
+      workspace 项目必须复制所有 crate 的 Cargo.toml + src/ 目录。
+      不能只 COPY 主 crate。
+
+  - category: rust_segfault_missing_lib
+    description: "Rust binary 启动时 segfault (缺运行时 .so)"
+    pattern: "error while loading shared libraries|libdbus-1\\.so\\.\\d+: cannot open|libssl3?\\.so"
+    suggested_action: edit_dockerfile
+    action_param: add_runtime_libs_to_final_stage
+    requires_user: false
+    max_retries: 1
+    hint: |
+      在 runtime stage 添加 libdbus-1-3 / libssl3 / libgtk-3-0 等运行时包。
+      先在宿主机 ldd target/release/<bin> 查看缺什么。
+
+  - category: rust_feature_missing
+    description: "Cargo feature 未启用"
+    pattern: "feature `?(\\w+)`? required|crate .* requires the feature"
+    suggested_action: edit_dockerfile
+    action_param: add_features_to_cargo_build
+    requires_user: false
+    max_retries: 1
+    hint: |
+      在 cargo build 命令加 --features <name>。
+      多 feature 用逗号分隔, 例如 --features default,mcp,hooks
+
+  # ============ 硬边界清单（人工降级永不自动）============
+hard_boundaries:
+  forbidden_actions:
+    - 修改宿主机系统配置
+    - 访问外部网络（除 eBPF 元数据 / pip 镜像外）
+    - 删除用户级数据（沙箱工作目录以外）
+    - 执行用户提供的高风险操作
+  user_prompt_categories:
+    - llm_auth_failed
+    - resource_exhausted
+  user_prompt_hints:
+    check_llm_key: |
+      ❌ LLM API Key 无效（401）。
+      请确认 --llm-key 参数 / OPENAI_API_KEY 环境变量是否正确。
+      或提供新的 API Key 后回复 '继续'。
+    free_resources: |
+      ❌ 资源耗尽（磁盘满 / OOM）。
+      请清理: docker system prune -a --volumes
+      或增大 Docker Desktop 资源限制。

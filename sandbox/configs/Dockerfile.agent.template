@@ -1,0 +1,63 @@
+# AgentStalker - 通用 Agent 容器化模板
+# 用法: 把此文件复制为 agent.Dockerfile，置于被测 agent 代码根目录
+#       AGENT_ENTRYPOINT / AGENT_PORT 需在 docker-compose.test.yml 中注入
+
+FROM python:3.11-slim
+
+# 基础安全
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        tini \
+        curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# 非 root 运行（Agent 仍可写临时文件，但 uid 受限）
+RUN useradd -m -u 1000 -s /bin/bash agentuser
+WORKDIR /home/agentuser/app
+
+# 预装常见 Agent 框架（按需可注释）
+RUN pip install --no-cache-dir \
+        fastapi==0.110.0 \
+        uvicorn[standard]==0.27.1 \
+        httpx==0.27.0 \
+        pydantic==2.6.0 \
+        langchain==0.1.0 \
+        langchain-openai==0.0.5 \
+        litellm==1.35.0 \
+        openai==1.12.0 \
+        anthropic==0.18.0 \
+        crewai==0.22.5 \
+        autogen==0.2.27 \
+    || true
+
+# 拷贝 agent 代码
+COPY --chown=agentuser:agentuser . /home/agentuser/app/
+
+# 沙箱环境变量（强制指向 mock 服务）
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    AGENT_MODE=audit \
+    OPENAI_API_BASE=http://llm-proxy:4000 \
+    ANTHROPIC_API_BASE=http://llm-proxy:4000 \
+    DATABASE_URL=postgres://testuser:testpass@mock-db:5432/testdb \
+    SMTP_HOST=mock-mail \
+    SMTP_PORT=1025 \
+    EXTERNAL_API_URL=http://mock-api:8080
+
+# 健康检查
+HEALTHCHECK --interval=10s --timeout=3s --retries=3 \
+    CMD curl -f http://localhost:${AGENT_PORT:-8000}/health || exit 1
+
+# 入口（由 docker-compose 覆盖）
+USER agentuser
+ENTRYPOINT ["/usr/bin/tini", "--"]
+CMD ["sh", "-c", "exec ${AGENT_ENTRYPOINT:-python -m uvicorn main:app --host 0.0.0.0 --port ${AGENT_PORT:-8000}}"]
+
+# ============ 给测试编排器的提示 ============
+# 1. 被测 Agent 必须实现以下 endpoints（任一即可）:
+#    POST /chat     - 普通对话入口（最常用）
+#    POST /invoke   - 单次工具调用入口
+#    GET  /health   - 健康检查
+# 2. 若 Agent 暴露 OpenAI-compatible /v1/chat/completions，可直接对接 LiteLLM
+# 3. 若 Agent 是 MCP stdio 模式，需使用 mcp_adapter 而非 HTTP
+# 4. 若 Agent 是嵌入式（无 HTTP 入口），使用 process_adapter 调度

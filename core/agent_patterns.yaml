@@ -1,0 +1,353 @@
+langchain_python:
+  tool_definitions:
+  - pattern: '@tool\s*\n\s*(?:async\s+)?def\s+(\w+)\s*\(([^)]*)\)'
+    captures:
+    - name
+    - params
+    severity_default: medium
+  - pattern: class\s+(\w+)\s*\(\s*(?:BaseTool|StructuredTool|Tool)\s*\)
+    captures:
+    - name
+    severity_default: medium
+  agent_definitions:
+  - pattern: AgentExecutor\s*\(
+    risk: medium
+  - pattern: create_react_agent\s*\(
+    risk: medium
+  - pattern: create_openai_tools_agent\s*\(
+    risk: medium
+  - pattern: create_structured_chat_agent\s*\(
+    risk: medium
+  dangerous_calls:
+  - pattern: agent\.(?:invoke|run|stream|arun)\s*\(
+    context: Agent 执行入口
+  - pattern: tool\.(?:invoke|run|arun)\s*\(
+    context: 直接工具调用
+langchain_js:
+  tool_definitions:
+  - pattern: import\s*\{[^}]*\btool\b[^}]*\}\s*from\s*['\"]@langchain/core/tools['\"]
+    type: import_tool
+  - pattern: const\s+(\w+)\s*=\s*tool\s*\(
+    captures:
+    - name
+  - pattern: new\s+DynamicStructuredTool\s*\(
+    risk: medium
+  node_definitions:
+  - pattern: \.add_node\s*\(\s*['\"](\w+)['\"]
+    captures:
+    - name
+  - pattern: StateGraph\s*\(
+    risk: medium
+langgraph:
+  graph_definitions:
+  - pattern: \.add_node\s*\(\s*['\"](\w+)['\"]
+    captures:
+    - name
+  - pattern: interrupt_before\s*=\s*\[([^\]]+)\]
+    captures:
+    - nodes
+  - pattern: StateGraph\s*\(
+    risk: medium
+autogen:
+  agent_definitions:
+  - pattern: UserProxyAgent\s*\(
+    risk: high
+    context: user proxy = 代码执行
+  - pattern: AssistantAgent\s*\(
+    risk: medium
+  - pattern: GroupChat\s*\(
+    risk: medium
+  - pattern: register_function\s*\(
+    risk: high
+crewai:
+  definitions:
+  - pattern: \bCrew\s*\(
+    risk: medium
+  - pattern: class\s+(\w+)\s*\(\s*Agent\s*\)
+    captures:
+    - name
+mcp:
+  server_patterns:
+  - pattern: class\s+(\w+)\s*\(\s*(?:FastMCP|Server)\s*\)
+    captures:
+    - name
+  - pattern: '@server\.list_tools|@list_tools'
+    type: list_tools
+  - pattern: '@server\.call_tool|@call_tool'
+    type: call_tool
+python_dangerous_sinks:
+  code_execution:
+  - pattern: \beval\s*\(
+    sink: code_execution
+    severity: critical
+  - pattern: \bexec\s*\(
+    sink: code_execution
+    severity: critical
+  command:
+  - pattern: subprocess\.\w+\([^)]*shell\s*=\s*True
+    sink: command_injection
+    severity: critical
+  - pattern: os\.system\s*\(
+    sink: command_injection
+    severity: critical
+  - pattern: os\.popen\s*\(
+    sink: command_injection
+    severity: critical
+  deserialization:
+  - pattern: pickle\.(load|loads)\s*\(
+    sink: deserialization
+    severity: critical
+  - pattern: yaml\.load\s*\((?![^)]*Loader\s*=\s*yaml\.SafeLoader)
+    sink: deserialization
+    severity: high
+  tls_bypass:
+  - pattern: requests\.\w+\([^)]*verify\s*=\s*False
+    sink: tls_bypass
+    severity: medium
+  template:
+  - pattern: render\s*\([^,)]*\)
+    sink: ssti
+    severity: high
+  - pattern: urllib\.request\.urlopen\s*\([^)]*\)
+    sink: ssrf
+    severity: medium
+sql_injection:
+  patterns:
+  - pattern: django\.db\.connection\.cursor\s*\(\)\.execute\s*\(.*['\"]\s*%\s*
+    severity: critical
+  - pattern: cursor\.execute\s*\([^,)]+,\s*\(
+    severity: low
+    context: parameterized
+  - pattern: \$[0-9]+
+    context: PostgreSQL placeholder
+    severity: low
+xss:
+  patterns:
+  - pattern: render_template_string\s*\(
+    severity: high
+    context: Jinja SSTI
+  - pattern: \.innerHTML\s*=
+    severity: high
+  - pattern: document\.write\s*\(
+    severity: high
+node_express:
+  dangerous:
+  - pattern: child_process\.spawn\s*\([^,]+,\s*\{[^}]*shell\s*:\s*true
+    severity: critical
+rust:
+  tool_definitions:
+  - pattern: '#\[(?:tool|rig::tool)\s*\([^)]*\)\]\s*\n\s*(?:pub\s+)?(?:async\s+)?fn\s+(\w+)'
+    captures:
+    - name
+    framework: rig
+  - pattern: impl\s+ToolSpec\s+for\s+(\w+)
+    captures:
+    - name
+    framework: codewhale
+  - pattern: handler(?:_register)?\s*\.\s*register(?:_tool|_handler)?\s*\(\s*['\"]?(\w+)['\"]?
+    captures:
+    - name
+  - pattern: impl\s+(?:\w+::)?Tool(?:\s+for\s+(\w+))?
+    captures:
+    - name
+  - pattern: pub\s+(?:async\s+)?fn\s+run\s*\(\s*&self\s*,\s*ctx
+    framework: codewhale-tui
+    context: Tool entry point
+  dangerous_sinks:
+    shell_command:
+    - pattern: Command\s*::\s*new\s*\(\s*['\"]([^'\"]+)['\"]
+      severity: critical
+      context: 'shell command sink — verify program name and args are not user-controlled'
+    - pattern: std::process::Command\s*::\s*new\s*\(
+      severity: critical
+    - pattern: tokio::process::Command\s*::\s*new\s*\(
+      severity: critical
+    background_task:
+    - pattern: tokio::spawn\s*\(
+      severity: medium
+    http:
+    - pattern: reqwest::Client\s*::\s*(?:new|builder)\s*\(
+      severity: high
+    - pattern: reqwest::get\s*\(
+      severity: high
+    - pattern: \.(?:get|post|put|delete|patch)\s*\(\s*['\"]([^'\"]+)['\"]
+      severity: high
+    deserialization:
+    - pattern: bincode::(?:deserialize|deserialize_from)\s*\(
+      severity: critical
+    - pattern: rmp_serde::(?:from_read|from_slice)\s*\(
+      severity: high
+    - pattern: serde_json::from_(?:str|reader|slice)\s*\(
+      severity: low
+    - pattern: serde_yaml::from_(?:str|reader)\s*\(
+      severity: high
+      context: YAML 默认 unsafe
+    - pattern: toml::from_(?:str|slice)\s*\(
+      severity: medium
+    secret_access:
+    - pattern: keyring::Entry\s*::\s*new\s*\(
+      severity: high
+    - pattern: Entry\s*::\s*new\s*\(\s*['\"]([^'\"]+)['\"]\s*,\s*['\"]([^'\"]+)['\"]
+      captures:
+      - service
+      - account
+      severity: high
+    fs_op:
+    - pattern: fs::(read|read_to_string|write|remove_file|create_dir|remove_dir)\s*\(
+      severity: medium
+    - pattern: tokio::fs::(read|read_to_string|write|remove_file)\s*\(
+      severity: medium
+    format_injection:
+    - pattern: format!\s*\(\s*['\"][^'\"]*\{\}\s*['\"]
+      severity: medium
+      context: 'format! with user-controlled template — prompt injection sink for system prompt assembly'
+    - pattern: writeln!\s*\(
+      severity: medium
+    env_var:
+    - pattern: std::env::var\s*\(\s*['\"]([^'\"]+)['\"]
+      captures:
+      - var_name
+      severity: medium
+    input:
+    - pattern: clap\s*::\s*(?:Parser|Args|Subcommand)
+      severity: low
+    - pattern: stdin\(\)\.read_line
+      severity: medium
+  prompt_patterns:
+  - pattern: const\s+(?:SYSTEM|CONSTITUTION|ROOT)_?(?:PROMPT|MESSAGE|POLICY)\s*:\s*&?str\s*=\s*r#?['\"]([^'\"]{200,})
+    captures:
+    - prompt
+    severity: high
+  - pattern: Tier\s+(\d+)\s*[:\.]\s*(\w+)
+    captures:
+    - tier
+    - name
+    severity: medium
+    context: 'multi-tier prompt layers — verify each tier is escaped and provenance-tagged'
+  - pattern: fn\s+as_system_block\s*\([^)]*\)\s*->\s*Option<String>
+    severity: high
+    context: 'system block builder — verify format!/template is auto-escaped'
+  - pattern: fn\s+load_(?:handoff_block|project_context|user_memory|user_instructions)\s*\(
+    severity: critical
+    context: 'untrusted context loader — ASI04 (data poisoning) / ASI08 (excessive agency) attack surface'
+  - pattern: AGENTS\.md|CLAUDE\.md|\.[\w-]+/(?:instructions|memory)\.md
+    severity: high
+  permission_patterns:
+  - pattern: pub\s+enum\s+ApprovalMode
+    severity: high
+    context: 'permission enum — verify bypass variants (Never/Deny/Allow) are not configurable from user input'
+  - pattern: ApprovalMode::Never|ApprovalMode::Deny|approval_mode\s*=\s*['\"]never['\"]
+    severity: critical
+  - pattern: sandbox\s*=\s*['\"](?:danger-full-access|full|unrestricted)['\"]
+    severity: critical
+  - pattern: '#\[(requires_role|requires_permission|tool_permission)\s*\('
+    severity: medium
+  - pattern: pub\s+enum\s+SandboxPolicy
+    severity: high
+  memory_patterns:
+  - pattern: fn\s+append_entry\s*\(
+    severity: high
+    context: 'memory append sink — verify secret scanning + declarative/imperative separation'
+  - pattern: fn\s+load_user_memory\s*\(
+    severity: high
+  - pattern: OpenOptions::new\(\)\.append\(true\)
+    severity: medium
+  - pattern: lancedb|qdrant_client|chromadb|tantivy|meilisearch_sdk
+    severity: medium
+  - pattern: 'sqlx::query|sqlx::query_as|diesel::'
+    severity: medium
+  mcp_patterns:
+  - pattern: pub\s+struct\s+ToolFilter
+    severity: high
+    context: 'tool filter — verify match uses normalized comparison, not raw =='
+  - pattern: \.matches\s*\(\s*tool_name\s*\)
+    severity: high
+  - pattern: pub\s+trait\s+McpServer|impl\s+McpServer\s+for
+    severity: medium
+  - pattern: rmcp\s*::\s*(?:Server|Client|Transport)|rmcp::model
+    severity: medium
+  - pattern: JsonRpcMessage|jsonrpc::Message
+    severity: medium
+  - pattern: stdio\(\)\s*\.spawn|stdio_transport
+    severity: medium
+  hook_patterns:
+  - pattern: pub\s+struct\s+WebhookHookSink|pub\s+struct\s+UnixSocketHookSink|pub\s+struct\s+JsonlHookSink
+    severity: medium
+    context: 'hook sink type defined — verify it is actually registered via add_sink() (otherwise it is dead code)'
+  - pattern: hooks\.add_sink\s*\(
+    severity: medium
+  - pattern: HookEvent\s*\{|impl\s+HookSink\s+for
+    severity: medium
+  - pattern: fn\s+emit\s*\(\s*&self\s*,\s*event\s*:\s*&HookEvent\s*\)
+    severity: medium
+  cargo_dependencies:
+  - crate: reqwest
+    risk: high
+    reason: HTTP client — SSRF / exfil vector
+  - crate: serde_yaml
+    risk: high
+    reason: YAML 默认 unsafe deserialization
+  - crate: bincode
+    risk: critical
+    reason: Binary deserialization — RCE if attacker controls input
+  - crate: rmp_serde
+    risk: high
+    reason: MessagePack deserialization
+  - crate: keyring
+    risk: medium
+    reason: OS keyring — verify entry names validated
+  - crate: rig
+    risk: high
+    reason: Rig agent framework — check tool impls and prompt escaping
+  - crate: rmcp
+    risk: high
+    reason: MCP Rust SDK — verify tool filter logic
+  - crate: sqlx
+    risk: medium
+    reason: Async SQL — verify queries parameterized
+  - crate: diesel
+    risk: medium
+    reason: Sync SQL — verify parameterized
+  framework_fingerprints:
+    codewhale:
+    - CodeWhale
+    - codewhale-tui
+    - codewhale-cli
+    - DEEPSEEK_TUI_BIN
+    codex:
+    - Codex
+    - codex-rs
+    - codex-cli
+    aider:
+    - aider-chat
+    - aider
+    rig:
+    - rig-core
+    - 'use rig::'
+    autogen_rs:
+    - autogen-rs
+    - auto_gen_rs
+attack_surface_to_patterns:
+  L1_user_input:
+  - prompt_patterns (system prompt + user input 拼接)
+  - '@tool 接收用户/模型生成参数'
+  L2_memory:
+  - Memory patterns (save_context, load_memory_variables)
+  - PostgresSaver/RedisSaver
+  - 'Rust: append_entry / load_user_memory'
+  L3_tool_call:
+  - bind_tools / ToolNode / StructuredTool
+  - 'Rust: #[tool] / ToolSpec / Command::new'
+  - 危险 sink (eval/exec/subprocess/Command::new)
+  L4_mcp:
+  - '@server.list_tools / @server.call_tool'
+  - 'Rust: rmcp::Server / McpServer / ToolFilter'
+  L5_identity:
+  - headers['Authorization'] 透传
+  - 'Rust: approval_mode enum Never variant'
+  L6_multi_agent:
+  - GroupChat / initiate_chat / .send()
+  - register_function
+  L7_observability:
+  - 缺乏 trace_id / OpenTelemetry / langfuse
+  - 'Rust: WebhookHookSink dead code'

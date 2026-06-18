@@ -1,0 +1,161 @@
+# AgentStalker 注入检测签名
+# 用于 monitoring/llm_proxy.py
+# Claude Code 调试时可直接 cat 此文件查看检测规则
+
+# ============ 提示词注入模式 ============
+prompt_injection:
+  - pattern: 'ignore (all )?previous instructions'
+    description: 经典 "ignore previous" 注入
+  - pattern: '忽略.*之前.*指令'
+    description: 中文版 "ignore previous" 注入
+  - pattern: 'disregard (all )?(prior|above) instructions'
+    description: 变体 "disregard prior instructions"
+  - pattern: 'system\s*:\s*you are'
+    description: 尝试重置 system role
+  - pattern: '</?\s*system\s*>'
+    description: XML 风格 system 标签
+  - pattern: '\[INST\]'
+    description: Llama2 风格指令注入
+  - pattern: '<\|im_start\|>system'
+    description: ChatML 格式 system 注入
+  - pattern: '###\s*Instruction\s*:'
+    description: Alpaca 风格指令注入
+  - pattern: '\bdeveloper mode\b'
+    description: 'Developer mode 越狱触发'
+  - pattern: '\bjailbreak\b'
+    description: jailbreak 关键词
+
+# ============ 敏感凭据模式 (response 中出现即告警) ============
+sensitive_patterns:
+  - pattern: 'sk-[a-zA-Z0-9]{20,}'
+    kind: openai_key
+    description: OpenAI API key
+  - pattern: 'sk-ant-[a-zA-Z0-9-]{20,}'
+    kind: anthropic_key
+    description: Anthropic API key
+  - pattern: 'AIza[0-9A-Za-z_-]{35}'
+    kind: google_key
+    description: Google API key
+  - pattern: 'AKIA[0-9A-Z]{16}'
+    kind: aws_access_key
+    description: AWS Access Key ID
+  - pattern: 'ghp_[a-zA-Z0-9]{36}'
+    kind: github_token
+    description: GitHub Personal Access Token
+  - pattern: 'my (initial|system) prompt'
+    kind: system_prompt_leak
+    description: 系统提示词泄露尝试
+  - pattern: 'the (original|true) instructions'
+    kind: system_prompt_leak
+    description: 原始指令泄露尝试
+  - pattern: 'password[:=]\s*["'']?\w{6,}'
+    kind: password
+    description: 密码模式
+  - pattern: 'BEGIN RSA PRIVATE KEY'
+    kind: private_key
+    description: RSA 私钥
+  - pattern: 'BEGIN OPENSSH PRIVATE KEY'
+    kind: ssh_key
+    description: SSH 私钥
+
+# ============ 危险工具名 (LLM 调用这些工具时标记为 suspicious) ============
+dangerous_tool_keywords:
+  - shell
+  - exec
+  - command
+  - send_email
+  - transfer
+  - delete
+  - publish
+  - modify_audit
+  - run_script
+
+# ============ 记忆投毒关键词 (写入记忆时检测) ============
+memory_poison_keywords:
+  - ignore previous
+  - preference:
+  - always cc
+  - all transactions
+  - bypass
+  - admin
+  - trusted sender
+
+# ============ Rust agent 特有的注入模式 (指令/权限/MCP/记忆) ============
+rust_agent_injection:
+  # AGENTS.md / CLAUDE.md 注入 (Rust agent instruction file 常见 pattern)
+  instruction_file:
+    - pattern: '@(?:\.[\w-]+/(?:instructions|memory)\.md|AGENTS\.md|CLAUDE\.md)'
+      description: "instruction file path — user-controlled system prompt content"
+      severity: high
+    - pattern: 'load_handoff_block|load_project_context|load_user_memory|load_user_instructions'
+      description: "multi-layer context loader — ASI04/ASI08 attack surface"
+      severity: critical
+    - pattern: 'Tier\s+\d+[:\.]\s*\w+'
+      description: "tier-numbered system prompt layer"
+      severity: medium
+    - pattern: 'fn\s+as_system_block'
+      description: "system block builder — format!() without auto-escape"
+      severity: critical
+  # 权限绕过 (permission enum bypass variant)
+  permission_bypass:
+    - pattern: 'ApprovalMode::Never|ApprovalMode::Deny'
+      description: "approval mode bypass variant (Never/Deny)"
+      severity: critical
+    - pattern: 'approval_mode\s*=\s*["'']never["'']'
+      description: "config setting approval mode to never"
+      severity: critical
+    - pattern: 'sandbox\s*=\s*["''](?:danger-full-access|full|unrestricted)["'']'
+      description: "sandbox set to unrestricted mode"
+      severity: critical
+  # 工具注册 (ToolFilter == no normalization)
+  tool_filter:
+    - pattern: '\.matches\s*\(\s*tool_name\s*\)'
+      description: "ToolFilter direct matches — case/whitespace bypass possible"
+      severity: high
+    - pattern: 'ToolFilter\s*\{|pub\s+struct\s+ToolFilter'
+      description: "ToolFilter struct definition — audit match logic for normalization"
+      severity: high
+  # Hook sink dead code (defined but not registered)
+  hook_sink:
+    - pattern: 'WebhookHookSink|UnixSocketHookSink|JsonlHookSink'
+      description: "Hook sink type defined — verify add_sink() registers it"
+      severity: medium
+    - pattern: 'hooks\.add_sink\s*\('
+      description: "Hook sink actual registration point"
+      severity: medium
+  # 记忆投毒 (append_entry without secret scan)
+  memory_poison:
+    - pattern: 'fn\s+append_entry'
+      description: "memory append entry — verify secret scanning and source tagging"
+      severity: high
+    - pattern: 'fn\s+load_user_memory'
+      description: "memory load entry — verify declarative/imperative separation"
+      severity: high
+  # MCP (rmcp::Server ToolFilter)
+  mcp:
+    - pattern: 'rmcp::(Server|Client|Transport)'
+      description: "rmcp MCP Rust SDK call"
+      severity: medium
+    - pattern: 'JsonRpcMessage|jsonrpc::Message'
+      description: "JSON-RPC message handler"
+      severity: medium
+    - pattern: 'stdio\(\)\.spawn|stdio_transport'
+      description: "stdio MCP transport — high command-injection risk"
+      severity: medium
+  # 提示词硬编码
+  hardcoded_prompts:
+    - pattern: 'const\s+(?:SYSTEM|CONSTITUTION|ROOT)_?(?:PROMPT|MESSAGE|POLICY)\s*:\s*&?str'
+      description: "hardcoded system prompt constant"
+      severity: high
+
+# ============ Rust 特有的危险工具 (基于 Cargo dep) ============
+rust_dangerous_tools:
+  - bincode                    # 任意反序列化
+  - serde_yaml                 # YAML 默认 unsafe
+  - rmp_serde                  # MessagePack
+  - keyring                    # OS keyring 访问
+  - reqwest                    # HTTP client (SSRF 风险)
+  - tokio                      # 异步运行时 (派生任务)
+  - rusqlite                   # SQLite (注入)
+  - sqlx                       # 异步 SQL (注入)
+  - diesel                     # 同步 SQL (注入)
