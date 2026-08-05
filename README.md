@@ -264,7 +264,7 @@ Framework detection is performed by `sandbox/discovery.py` and returns an `Agent
 - **Sandbox replay requires a runnable agent.** Pure source-only audits (quick / standard) cannot detect runtime behaviors that depend on LLM stochasticity.
 - **Default taint tracker is intra-procedural.** Cross-module flows require the extended analyzer (which is on the roadmap).
 - **VerdictEngine is deterministic.** Novel attack patterns fall through to the LLM-as-judge fallback, which inherits the limitations of the judging model.
-- **MCP coverage is stdio-only.** Network-transport MCP servers are detected but not deeply audited in this release.
+- **MCP audit covers tool squatting, description poisoning, token passthrough, and stdio/sse/http transport detection** (core/mcp_auditor.py + sandbox/monitoring/mcp_monitor.py + VerdictEngine R009-R011). OAuth scope over-permission, session hijack, and SBOM/supply-chain signing are documented in references/mcp-risks.md but not yet implemented (see docs/v2-roadmap.md).
 - **No large-scale empirical evaluation.** The framework has not been run on a 100-Agent benchmark — partly because no standardized Agent vulnerability benchmark exists yet. The roadmap includes publishing one.
 - **Sandbox container security is out of scope.** Container escape, image poisoning, kernel CVEs are not addressed; production deployment must layer on additional hardening.
 

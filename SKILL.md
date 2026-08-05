@@ -148,9 +148,9 @@ exclude_patterns:
 | `orchestrator.py` | **状态跟踪** | `SandboxState` 数据类 + `new_session / record / add_finding / save_state / summary`，**不启动容器** |
 | `discovery.py` | **薄逻辑** | AgentProfile + AgentDiscovery（深度 AST 扫描，发现 tool/permission/MCP） |
 | `adapters/` | **薄逻辑** | LangChain wrapper 生成 + MCP JSON-RPC stdio + 通用 HTTP + Playwright Web |
-| `monitoring/` | **数据采集** | 7 层监控（network/fs/process/llm/memory/credential/ebpf），pattern 数据在 `data/process_signatures.yaml` 与 `data/injection_signatures.yaml` |
-| `correlation/` | **研判引擎** | `Verdict/Severity` 枚举 + `Evidence` + `EvidenceBuilder` + `VerdictEngine`（8 条规则 R001-R008，规则数据在 `data/verdict_rules.yaml`） |
-| `data/` | **事实数据** | `heal_signatures.yaml`（14 错误签名）、`suspicious_domains.yaml`、`injection_signatures.yaml`、`process_signatures.yaml`、`verdict_rules.yaml`、`session_extract_patterns.yaml` |
+| `monitoring/` | **数据采集** | 8 层监控（network/fs/process/llm/memory/credential/ebpf/**mcp**），pattern 数据在 `data/process_signatures.yaml` 与 `data/injection_signatures.yaml` |
+| `correlation/` | **研判引擎** | `Verdict/Severity` 枚举 + `Evidence` + `EvidenceBuilder` + `VerdictEngine`（**11 条规则 R001-R011**，含 MCP 专属 R009-R011，规则数据在 `data/verdict_rules.yaml`） |
+| `data/` | **事实数据** | `heal_signatures.yaml`（**22 错误签名**，含 8 个 Rust 专属）、`suspicious_domains.yaml`、`injection_signatures.yaml`、`process_signatures.yaml`、`verdict_rules.yaml`、`session_extract_patterns.yaml` |
 | `templates/` | **Jinja2 模板** | `Dockerfile.python.j2` / `Dockerfile.node.j2` / `Dockerfile.go.j2` / `compose.override.j2` / `nginx.conf.j2` |
 | `configs/` | **静态配置** | `litellm_config.yaml`、`fixtures/db_init.sql`、`fixtures/wiremock/mappings.json`、`policy/opa.rego`、`k8s/agent-stalker-job.yaml` |
 | `docker-compose.test.yml` | **静态编排** | 7 容器编排（被 Claude Code 用 `docker compose -f ... up` 启动） |
@@ -855,11 +855,10 @@ Docker + Tracee + LiteLLM 环境。
   - 新 `sandbox/templates/`（5 个 Jinja2：jinja2 CLI 渲染）
   - 编排权完全交给 Claude Code：所有 `docker compose up` / `curl` / `sed -i` / `docker restart` 走 Bash 工具
   - SKILL.md 重写 "Stage 3 控制平面" 章节，反映新架构
-- **v2.1 (控制平面 milestone)**:
-  - 新增 `sandbox/deployment.py` 部署控制器（8 步流程 + 5 要素验证 + 多策略探针）
-  - 新增 `sandbox/attack_controller.py` 攻击控制器（SessionManager + 3 channel + 自适应变量提取 + 4 sidecar 同步拉取）
-  - 新增 `sandbox/self_heal.py` 自愈循环（14 错误签名 + 9 修复动作 + 人工降级硬边界）
-  - SKILL.md 新增 "Stage 3 控制平面" 章节
+- **v2.1 (控制平面 milestone)** — 以下为计划中,尚未实现（编排权仍归 Claude Code）:
+  - 计划: `sandbox/deployment.py` 部署控制器（8 步流程 + 5 要素验证 + 多策略探针）
+  - 计划: `sandbox/attack_controller.py` 攻击控制器（SessionManager + 3 channel + 自适应变量提取 + 4 sidecar 同步拉取）
+  - 计划: `sandbox/self_heal.py` 自愈循环（当前用 `sandbox/heal_diagnose.py` 只读诊断 + Claude Code 决策；22 错误签名已就绪）
 - **v2.0 (Self-contained milestone)**: 内化 code-audit + hack-skills 全集；新增
   `sandbox/` 完整动态验证栈（adapters/executors/monitoring/correlation/configs）
 - **Based on**: OWASP Agentic Top 10 (2026), Microsoft Defense in Depth

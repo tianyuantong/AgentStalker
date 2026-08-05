@@ -264,7 +264,7 @@ Payload **不是** 裸 PoC。`payloads/*.yaml` 中每条都带三段元数据：
 - **沙箱重放要求 Agent 可运行**。仅源码审计（quick / standard）无法检测依赖 LLM 随机性的运行时行为。
 - **默认污点追踪是过程内**。跨模块流需要扩展分析器（在路线图上）。
 - **研判引擎是确定性的**。新型攻击模式会落到 LLM 兜底，继承裁判模型的局限。
-- **MCP 覆盖主要是 stdio**。网络传输 MCP server 可被识别但本版本未深度审计。
+- **MCP 审计覆盖工具名 squatting、描述投毒、token passthrough,以及 stdio/sse/http 传输检测**(core/mcp_auditor.py + sandbox/monitoring/mcp_monitor.py + VerdictEngine R009-R011)。OAuth scope 过权、session hijack、SBOM/供应链签名在 references/mcp-risks.md 有文档但尚未实现(见 docs/v2-roadmap.md)。
 - **无大规模经验性评估**。框架未在 100-Agent 基准上跑过——部分原因是没有标准化的 Agent 漏洞基准，路线图包含发布一个。
 - **沙箱容器安全不在范围**。容器逃逸、镜像投毒、内核 CVE 未覆盖；生产部署需叠加额外加固。
 
