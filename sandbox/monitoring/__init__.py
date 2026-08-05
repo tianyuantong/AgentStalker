@@ -1,7 +1,7 @@
 """
 AgentStalker Multi-layer Monitoring
 ===================================
-7 层监控组件，捕获 Agent 行为的所有副效应：
+8 层监控组件，捕获 Agent 行为的所有副效应：
 
 1. network_monitor — 出/入站网络流量（含 DNS、TLS 握手、payload 抓取）
 2. filesystem_monitor — 文件系统读写（敏感路径、写入模式）
@@ -10,11 +10,12 @@ AgentStalker Multi-layer Monitoring
 5. memory_inspector — 长期记忆读写（Redis/Vector DB query log）
 6. credential_monitor — 凭据访问（/etc/shadow, .aws, .ssh）
 7. ebpf_runner — eBPF / Tracee 编排（系统调用级别）
+8. mcp_monitor — MCP server 行为（工具名冲突、描述投毒、token 转发、响应注入）
 
 每个组件输出统一格式的 Event：
 {
     "timestamp": float,
-    "layer": str,  # network | filesystem | process | llm | memory | credential | syscall
+    "layer": str,  # network | filesystem | process | llm | memory | credential | syscall | mcp
     "event_type": str,
     "actor": str,  # agent pid / container / process
     "target": str,
@@ -30,6 +31,7 @@ from .llm_proxy import LLMProxy
 from .memory_inspector import MemoryInspector
 from .credential_monitor import CredentialMonitor
 from .ebpf_runner import EBPFRunner
+from .mcp_monitor import MCPMonitor
 
 __all__ = [
     "NetworkMonitor",
@@ -39,4 +41,5 @@ __all__ = [
     "MemoryInspector",
     "CredentialMonitor",
     "EBPFRunner",
+    "MCPMonitor",
 ]
