@@ -68,14 +68,8 @@ AgentStalker 已对 **CodeWhale v0.8.52**——真实 Rust Agent CLI(16 crates,3
 </details>
 
 <!-- IMAGE: docs/images/codewhale-asr-by-dimension.png -->
-<!-- AI 生图提示词:
-一张干净的横向柱状图,标题 "Attack Success Rate by Dimension"(按维度的攻击成功率)。
-七个柱子从左到右依次标注:"D1 提示词注入 67%"、"D2 工具滥用 100%"、"D3 记忆投毒 50%"、
-"D4 MCP 100%"、"D5 身份/策略 100%"、"D6 可观测性 0%"、"D7 数据外带 100%"。
-100% 和 67% 的柱子为红色(已利用);50% 的为琥珀色;0% 的为灰色。
-Y 轴 0-100%。浅色背景、深蓝文字、极简工程风格、无 3D 效果。
-尺寸:900x420 px,PNG,透明或白色背景。
--->
+<img width="2560" height="1440" alt="image" src="https://github.com/user-attachments/assets/4b2ade77-8e51-4843-8451-7bfcae31c305" />
+
 
 ---
 
@@ -351,15 +345,8 @@ v2 版本加入了回归测试套件与 CI 就绪的基础设施。任何安全�
 测试覆盖 v2 修复的每一类 bug:Rust tracker 的重复 dict key 静默漏报、monitoring 包不可 import、replay executor 的 NameError、MCP squatting/poisoning/passthrough 检测、语义污点置信度传播、adapter registry 解析。
 
 <!-- IMAGE: docs/images/test-quality-overview.png -->
-<!-- AI 生图提示词:
-一张极简信息图横幅,四个大号统计卡片单行排列。
-卡片1:大号粗体 "76",下方标签 "regression tests"(回归测试)。
-卡片2:大号粗体 "12",下方标签 "reviewable commits"(可审查 commit)。
-卡片3:大号粗体 "4",下方标签 "test fixtures"(测试 fixture)。
-卡片4:大号粗体 "0",下方标签 "silent bug classes"(静默 bug 类)。
-深蓝数字、白色卡片、卡片间细灰分隔线、浅灰背景。扁平设计,无图标,无 3D,无阴影。
-工程仪表盘美学。尺寸:1000x300 px,PNG。
--->
+<img width="1527" height="471" alt="image" src="https://github.com/user-attachments/assets/5cf898f0-10ea-4922-97db-2cd46f578258" />
+
 
 ---
 
