@@ -82,12 +82,16 @@ CREWAI_PATTERNS = {
 }
 
 # MCP
+# Commit 7: 激活死代码(sse_transport/stdio_transport 原定义但 _extract_mcp 从不调用)
+# 并加 HTTP 传输检测(修复 README:267 "Network-transport MCP servers are detected"
+# 的虚假声明 —— 原本根本不检测网络传输)。
 MCP_PATTERNS = {
     "server_class": re.compile(r"class\s+\w+\s*\(\s*(FastMCP|Server)\s*\)"),
-    "list_tools": re.compile(r"@server\.list_tools|@list_tools"),
-    "call_tool": re.compile(r"@server\.call_tool|@call_tool"),
-    "stdio_transport": re.compile(r"stdio_server|stdio_client"),
-    "sse_transport": re.compile(r"sse_server|sse_client"),
+    "list_tools": re.compile(r"@server\.list_tools|@list_tools|@mcp\.tool|@app\.list_tools"),
+    "call_tool": re.compile(r"@server\.call_tool|@call_tool|@app\.call_tool"),
+    "stdio_transport": re.compile(r'stdio_server|stdio_client|StdioServerParameters|transport\s*=\s*["\']stdio["\']'),
+    "sse_transport": re.compile(r"sse_server|sse_client|SSEServerTransport|sse_transport"),
+    "http_transport": re.compile(r"StreamableHTTPServerTransport|streamable_http|httpx.*?/mcp|fastapi.*?/mcp"),
 }
 
 # 危险 sink
@@ -310,14 +314,106 @@ class ASTExtractor:
 
     # ----- MCP -----
     def _extract_mcp(self, source: str, path: Path):
-        for m in MCP_PATTERNS["list_tools"].finditer(source):
-            # 找临近的 @server.list_tools() 上方的注释作为 server 名称
-            line_no = source[:m.start()].count("\n") + 1
+        """Commit 7 增强:抽取 MCP 工具名/描述/传输类型。
+
+        原版只记 {file, line, trust:"unknown", tools_declared:True},不抽工具名,
+        不检测传输 —— 导致 R-MCP-SQUAT-001(工具名冲突)无法实现,sse_transport
+        正则是死代码。现版:
+        - 解析 @server.list_tools/@mcp.tool/@app.list_tools 装饰的函数,抽工具名 + docstring
+        - 检测传输类型(stdio/sse/http),激活原本定义但从不调用的 sse_transport 正则
+        - 每个 mcp_servers[] 项变成 {file, line, name, transport, tools:[{name,description}], trust}
+        """
+        rel = str(path.relative_to(self.source_dir))
+
+        # 1. 检测传输类型(激活原死代码)
+        transport = "unknown"
+        if MCP_PATTERNS["stdio_transport"].search(source):
+            transport = "stdio"
+        if MCP_PATTERNS["sse_transport"].search(source):
+            transport = "sse" if transport == "unknown" else f"{transport}+sse"
+        if MCP_PATTERNS["http_transport"].search(source):
+            transport = "http" if transport == "unknown" else f"{transport}+http"
+
+        # 2. 找 server 名(FastMCP("name") 或 class XxxServer(Server))
+        server_name = rel
+        sm = re.search(r'(?:FastMCP|mcp\.server\.fastmcp\.FastMCP)\s*\(\s*["\']([^"\']+)["\']', source)
+        if sm:
+            server_name = sm.group(1)
+        else:
+            cm = re.search(r'class\s+(\w+)\s*\(\s*(?:FastMCP|Server)\s*\)', source)
+            if cm:
+                server_name = cm.group(1)
+
+        # 3. AST 解析抽工具名 + 描述
+        tools_found: list[dict] = []
+        try:
+            tree = ast.parse(source)
+            for node in ast.walk(tree):
+                if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    continue
+                # 检查装饰器是否是 MCP 工具注册(@server.list_tools / @mcp.tool / @app.list_tools)
+                is_mcp_tool = False
+                for dec in node.decorator_list:
+                    dec_str = ast.unparse(dec) if hasattr(ast, "unparse") else ""
+                    if any(p in dec_str for p in ("list_tools", "call_tool", ".tool", "mcp.tool")):
+                        is_mcp_tool = True
+                        break
+                if not is_mcp_tool:
+                    continue
+
+                tool_name = node.name
+                description = (ast.get_docstring(node) or "").strip()
+
+                # 试图从函数体找 Tool(name="...", description="...") 字面量补充
+                for child in ast.walk(node):
+                    if isinstance(child, ast.Call):
+                        func_str = ast.unparse(child.func) if hasattr(ast, "unparse") else ""
+                        if "Tool" in func_str or func_str.endswith("tool"):
+                            for kw in child.keywords:
+                                if kw.arg == "name" and isinstance(kw.value, ast.Constant):
+                                    tool_name = str(kw.value.value)
+                                if kw.arg == "description" and isinstance(kw.value, ast.Constant):
+                                    description = str(kw.value.value)
+
+                line_no = node.lineno
+                tools_found.append({
+                    "name": tool_name,
+                    "description": description,
+                    "file": rel,
+                    "line": line_no,
+                })
+        except Exception:
+            # AST 解析失败时退化为正则:找 @mcp.tool / @server.call_tool 下的函数名
+            for m in MCP_PATTERNS["list_tools"].finditer(source):
+                line_no = source[:m.start()].count("\n") + 1
+                # 找紧随的 def name
+                after = source[m.end():m.end() + 200]
+                fn_m = re.search(r'def\s+(\w+)', after)
+                if fn_m:
+                    tools_found.append({
+                        "name": fn_m.group(1),
+                        "description": "",
+                        "file": rel,
+                        "line": line_no,
+                    })
+
+        # 4. 判断是否是 MCP server(有 server_class 或任何 MCP 模式命中)
+        is_server = bool(
+            MCP_PATTERNS["server_class"].search(source)
+            or MCP_PATTERNS["list_tools"].search(source)
+            or MCP_PATTERNS["call_tool"].search(source)
+            or tools_found
+        )
+
+        if is_server:
             self.model.mcp_servers.append({
-                "file": str(path.relative_to(self.source_dir)),
-                "line": line_no,
-                "trust": "unknown",  # 静态无法判断
-                "tools_declared": True
+                "file": rel,
+                "line": 1,
+                "name": server_name,
+                "transport": transport,
+                "tools": tools_found,
+                "trust": "unknown",  # 静态无法判断,留 Commit 9 运行时验证
+                "tools_declared": len(tools_found) > 0,
             })
 
     # ----- 危险 sink -----
