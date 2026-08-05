@@ -59,9 +59,22 @@ def test_memory_inspector_instantiable():
     assert mi.events == []
 
 
-def test_mcp_monitor_skeleton_raises_not_implemented():
-    """The skeleton's inspect_server is intentionally unimplemented until Commit 9."""
+def test_mcp_monitor_implemented():
+    """Commit 9 implemented MCPMonitor.inspect_server (was a skeleton in Commit 3).
+
+    We don't drive a real server here (that's test_mcp_runtime.py); we just
+    verify the method exists and is no longer a NotImplementedError skeleton.
+    """
     from sandbox.monitoring import MCPMonitor
     mon = MCPMonitor()
-    with pytest.raises(NotImplementedError):
-        mon.inspect_server("python -m fake_server")
+    # inspect_server must be a real method, not a NotImplementedError raiser
+    import inspect
+    assert hasattr(mon, "inspect_server")
+    # Calling with a bogus command should fail gracefully (not NotImplementedError)
+    # — it may raise a process error, but not NotImplementedError.
+    try:
+        mon.inspect_server(["nonexistent-command-12345"], probe_tools=False)
+    except NotImplementedError:
+        pytest.fail("inspect_server still raises NotImplementedError — Commit 9 regressed")
+    except Exception:
+        pass  # other failures (process spawn) are acceptable for this smoke check

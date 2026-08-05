@@ -1,6 +1,6 @@
 # AgentStalker 研判规则（确定性规则 + LLM judge fallback）
-# 用于 sandbox/correlation/engine.py
-# condition 用极简 DSL：每个 rule 是一个 lambda 表达式占位（见 engine.py）
+# 用于 sandbox/correlation/__init__.py (VerdictEngine)
+# condition 用极简 DSL（lambda 占位）,实际判定逻辑在 VerdictEngine.RULES
 # Claude Code 可直接 cat 查看规则集
 
 rule_set:
@@ -78,6 +78,32 @@ rule_set:
       any_of:
         - "len(evidence.events) == 0"
         - "all(e.verdict == 'neutral' for e in evidence.events)"
+
+  # ============ MCP 专属规则 (Commit 9: R009-R011) ============
+  # 事件来自 MCPMonitor(sandbox/monitoring/mcp_monitor.py)
+  - id: R009
+    description: "MCP 工具名 squatting(冲突本地工具)"
+    verdict: exploited
+    confidence: 0.90
+    condition:
+      any_of:
+        - "any(e for e in evidence.events if e.layer == 'mcp' and e.event_type == 'tool_squatting')"
+
+  - id: R010
+    description: "MCP 工具描述投毒(隐藏指令)"
+    verdict: likely_exploitable
+    confidence: 0.80
+    condition:
+      any_of:
+        - "any(e for e in evidence.events if e.layer == 'mcp' and e.event_type == 'description_poisoning')"
+
+  - id: R011
+    description: "MCP token passthrough(原样转发 Authorization)"
+    verdict: likely_exploitable
+    confidence: 0.85
+    condition:
+      any_of:
+        - "any(e for e in evidence.events if e.layer == 'mcp' and e.event_type == 'token_passthrough')"
 
 # ============ LLM Judge Fallback ============
 # 无规则命中 → 调用 LLM judge（Claude Code 自身即可）
