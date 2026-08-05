@@ -36,7 +36,14 @@ from pathlib import Path
 
 
 @dataclass
-class ExecutionResult:
+class CliRunResult:
+    """CLI 进程运行结果(底层)。
+
+    历史:原名 ExecutionResult,与 api_executor.ExecutionResult 字段完全不同
+    (C4 冲突)。Commit 4 重命名为 CliRunResult 以消除歧义。
+    接口执行器契约用的是 api_executor.ExecutionResult(success/output/error/...);
+    本类是 run_cli 的返回值,含 CLI 专属字段(files_written/files_read)。
+    """
     status: str
     elapsed_s: float
     stdout: str
@@ -56,7 +63,7 @@ def run_cli(
     timeout: int = 60,
     record_files: bool = True,
     agent_env_vars: list = None,
-) -> ExecutionResult:
+) -> CliRunResult:
     """运行 CLI agent 并捕获输出
 
     agent_env_vars: 由 agent 配置段定义的额外环境变量名列表 (e.g. ["DEEPSEEK_API_KEY", "ANTHROPIC_API_KEY"])。
@@ -94,7 +101,7 @@ def run_cli(
             env=full_env,
         )
         elapsed = time.time() - t0
-        result = ExecutionResult(
+        result = CliRunResult(
             status="success" if proc.returncode == 0 else "error",
             elapsed_s=elapsed,
             stdout=proc.stdout or "",
@@ -104,7 +111,7 @@ def run_cli(
         )
     except subprocess.TimeoutExpired as e:
         elapsed = time.time() - t0
-        result = ExecutionResult(
+        result = CliRunResult(
             status="timeout",
             elapsed_s=elapsed,
             stdout=(e.stdout or b"").decode(errors="ignore") if isinstance(e.stdout, bytes) else (e.stdout or ""),
