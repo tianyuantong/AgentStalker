@@ -68,15 +68,8 @@ AgentStalker was run end-to-end against **CodeWhale v0.8.52** — a real Rust ag
 </details>
 
 <!-- IMAGE: docs/images/codewhale-asr-by-dimension.png -->
-<!-- Prompt for AI image generation:
-A clean horizontal bar chart titled "Attack Success Rate by Dimension".
-Seven bars labeled (left to right): "D1 Prompt Injection 67%", "D2 Tool Abuse 100%",
-"D3 Memory Poisoning 50%", "D4 MCP 100%", "D5 Identity/Policy 100%",
-"D6 Observability 0%", "D7 Data Exfil 100%".
-Bars at 100% and 67% are red (exploited); the 50% bar is amber; the 0% bar is grey.
-Y-axis 0-100%. Light background, dark blue text, minimalist engineering style, no 3D.
-Size: 900x420 px, PNG, transparent or white background.
--->
+<img width="2560" height="1440" alt="image" src="https://github.com/user-attachments/assets/acbfcb44-178c-4fc7-b431-e2d018776b71" />
+
 
 ---
 
@@ -351,16 +344,8 @@ The v2 release added a regression-test suite and CI-ready scaffolding. No securi
 Tests guard every bug class fixed in v2: the duplicate-dict-key silent miss in the Rust tracker, the unimportable monitoring package, the `NameError` in the replay executor, MCP squatting/poisoning/passthrough detection, semantic-taint confidence propagation, and adapter-registry resolution.
 
 <!-- IMAGE: docs/images/test-quality-overview.png -->
-<!-- Prompt for AI image generation:
-A minimalist infographic banner with four large stat cards in a single row.
-Card 1: large bold "76" with label "regression tests" below.
-Card 2: large bold "12" with label "reviewable commits".
-Card 3: large bold "4" with label "test fixtures".
-Card 4: large bold "0" with label "silent bug classes".
-Dark blue number text on white cards, thin grey dividers between cards,
-light grey background. Flat design, no icons, no 3D, no shadows.
-Engineering dashboard aesthetic. Size: 1000x300 px, PNG.
--->
+<img width="1527" height="471" alt="image" src="https://github.com/user-attachments/assets/d06ddf4a-270c-431c-bf79-c4c25c73f995" />
+
 
 ---
 
