@@ -75,6 +75,30 @@ mcp:
     type: list_tools
   - pattern: '@server\.call_tool|@call_tool'
     type: call_tool
+  # Commit 8: MCP 审计规则(与 core/mcp_auditor.py 同步)
+  # 这些规则让 agent_patterns.yaml 这个"事实文件"反映代码里实现的检测器
+  audit_rules:
+  - rule_id: R-MCP-SQUAT-001
+    name: tool_name_shadowing
+    description: MCP 工具名与 agent 本地工具名冲突(squatting)
+    severity: high
+    confidence: 0.90
+    owasp: ASI04
+    implemented_in: core/mcp_auditor.py::MCPAuditor.detect_tool_squatting
+  - rule_id: R-MCP-DESC-001
+    name: tool_description_poisoning
+    description: MCP 工具描述含隐藏指令(ignore previous / [HIDDEN] / exfiltrate 等)
+    severity: high
+    confidence: 0.80
+    owasp: ASI04
+    implemented_in: core/mcp_auditor.py::MCPAuditor.detect_description_poisoning
+  - rule_id: R-MCP-TOKEN-001
+    name: token_passthrough
+    description: MCP server 源码原样转发 Authorization header 到下游(无 token exchange)
+    severity: high
+    confidence: 0.85
+    owasp: ASI03
+    implemented_in: core/mcp_auditor.py::MCPAuditor.detect_token_passthrough
 python_dangerous_sinks:
   code_execution:
   - pattern: \beval\s*\(
