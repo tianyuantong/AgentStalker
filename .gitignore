@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual envs
+.venv/
+venv/
+env/
+ENV/
+
+# AgentStalker runtime artifacts
+output/
+evidence/
+*.json.bak
+*.log
+
+# Editor / OS
+.vscode/
+.idea/
+.zcode/
+.DS_Store
+Thumbs.db

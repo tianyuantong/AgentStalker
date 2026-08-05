@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agentstalker"
+version = "1.0.0"
+description = "End-to-end security audit framework for LLM agents: static modeling, attack-graph synthesis, sandbox-driven dynamic verification."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Proprietary - authorized assessment use only" }
+authors = [{ name = "AgentStalker" }]
+dependencies = [
+    "pyyaml>=6.0",
+    "jinja2>=3.1",
+    "regex>=2024.0",
+    "requests>=2.31",
+]
+
+[project.optional-dependencies]
+# Runtime MCP audit (driving real MCP servers for dynamic verification)
+mcp = [
+    "mcp>=1.0",
+    "fastmcp>=0.2",
+]
+# Test suite
+test = [
+    "pytest>=8.0",
+    "mcp>=1.0",
+    "fastmcp>=0.2",
+]
+# All optional extras combined
+all = [
+    "pytest>=8.0",
+    "mcp>=1.0",
+    "fastmcp>=0.2",
+]
+
+[tool.setuptools]
+# Treat the top-level packages as flat; no src/ layout.
+packages = ["core", "sandbox"]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+pythonpath = ["."]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
