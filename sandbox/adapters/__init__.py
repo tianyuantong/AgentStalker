@@ -27,6 +27,7 @@ from __future__ import annotations
 import abc
 import json
 import os
+import subprocess
 import time
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
@@ -208,3 +209,104 @@ class BaseAdapter(abc.ABC):
 
     def __repr__(self):
         return f"<{self.framework_name}Adapter endpoint={self.sandbox_endpoint}>"
+
+    # ============ 共享 subprocess spawn/stop（H6 去重）============
+    # 原 CrewAI/LlamaIndex/LangGraph 的 _start_agent 各自重复实现 ~95% 相同的
+    # "rglob + 关键字匹配 + Popen + sleep" 逻辑,Commit 5 提取到基类。
+    def _spawn_by_keyword(
+        self,
+        keyword: str,
+        log_name: str,
+        glob: str = "main.py",
+        exclude_tests: bool = True,
+        env_overrides: dict | None = None,
+    ) -> bool:
+        """按关键字找入口文件并 spawn 子进程。
+
+        Args:
+            keyword: 入口文件内容必须包含的关键字(大小写不敏感)
+            log_name: 日志文件名(写到 source_dir.parent/output/evidence/)
+            glob: rglob 模式,默认 "main.py"
+            exclude_tests: 是否排除路径含 'test' 的文件
+            env_overrides: 额外环境变量
+        Returns: True 如果成功 spawn
+        """
+        kw = keyword.lower()
+        entry = None
+        for p in self.source_dir.rglob(glob):
+            if exclude_tests and "test" in str(p):
+                continue
+            try:
+                content = p.read_text(encoding="utf-8", errors="ignore")
+            except Exception:
+                continue
+            if kw in content.lower():
+                entry = p
+                break
+        if not entry:
+            return False
+
+        env = os.environ.copy()
+        if env_overrides:
+            env.update(env_overrides)
+
+        try:
+            log_path = Path(self.source_dir.parent) / "output" / "evidence" / log_name
+            log_path.parent.mkdir(parents=True, exist_ok=True)
+            self.process = subprocess.Popen(
+                ["python", str(entry)],
+                cwd=entry.parent,
+                env=env,
+                stdout=open(log_path, "w"),
+                stderr=subprocess.STDOUT,
+            )
+            time.sleep(3)
+            return True
+        except Exception:
+            return False
+
+    def _stop_process(self) -> bool:
+        """终止子进程(共享版)。"""
+        if getattr(self, "process", None):
+            try:
+                self.process.terminate()
+                return True
+            except Exception:
+                pass
+        return True
+
+
+# ============ Adapter Registry（H2 修复）============
+# discovery.py 推荐 adapter 字符串(python_autogen/python_crewai/...),但原本
+# 没有从字符串解析到类的机制 —— 字符串无法 resolve。Commit 5 加显式 registry。
+ADAPTER_REGISTRY: dict[str, str] = {
+    "python_langchain": "python_langchain.LangChainAdapter",
+    "python_mcp": "python_mcp.MCPPythonAdapter",
+    "python_autogen": "autogen.AutoGenAdapter",
+    "python_crewai": "crewai.CrewAIAdapter",
+    "python_llamaindex": "llamaindex.LlamaIndexAdapter",
+    "python_langgraph": "langgraph.LangGraphAdapter",
+    "python_web": "python_web.WebAdapter",
+    "generic_api": "generic_api.GenericAPIAdapter",
+    "rust_cli": "cli.CLIAdapter",
+    "cli": "cli.CLIAdapter",
+}
+
+
+def get_adapter(name: str) -> type[BaseAdapter]:
+    """根据 discovery.py 的推荐 adapter 字符串解析到适配器类。
+
+    Args:
+        name: ADAPTER_REGISTRY 的 key(如 "python_autogen")
+    Returns: 适配器类(继承 BaseAdapter)
+    Raises: KeyError(name 不在 registry)、ImportError(模块/类不存在)
+    """
+    if name not in ADAPTER_REGISTRY:
+        raise KeyError(
+            f"unknown adapter '{name}'; known: {sorted(ADAPTER_REGISTRY)}"
+        )
+    module_path, class_name = ADAPTER_REGISTRY[name].rsplit(".", 1)
+    # 相对导入:module_path 是 sandbox.adapters 的子模块名
+    import importlib
+    mod = importlib.import_module(f"sandbox.adapters.{module_path}")
+    return getattr(mod, class_name)
