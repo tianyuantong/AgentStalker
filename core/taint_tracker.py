@@ -78,9 +78,14 @@ class TaintFlow:
     sanitizers: list[str] = field(default_factory=list)
     blocked: bool = False
     severity: str = "high"
+    # Commit 11: 语义污点引擎字段(非破坏,默认值保持向后兼容)
+    confidence: float = 1.0       # 累积传播概率 0.0-1.0(镜像 Stage4 Evidence.confidence)
+    feature_type: str = ""        # direct_instruction|structured_data|indirect_reference|non_text
+    llm_hops: list[dict] = field(default_factory=list)  # 经过的 LLM hop(每跳的传播概率)
 
     @property
     def is_exploitable(self) -> bool:
+        # 布尔逻辑保持不变(向后兼容);confidence 是补充的连续度量
         return (
             not self.blocked
             and not self.source.sanitized
@@ -280,6 +285,8 @@ def main():
     ap.add_argument("--source", required=True)
     ap.add_argument("--agent-model", help="agent_model.json 路径")
     ap.add_argument("--output", default="taint_flows.json")
+    ap.add_argument("--semantic", action="store_true",
+                    help="启用语义污点引擎:对 LLM hop 做概率传播,计算累积置信度")
     args = ap.parse_args()
 
     agent_model = {}
@@ -288,6 +295,12 @@ def main():
 
     tracker = TaintTracker(args.source, agent_model)
     flows = tracker.track()
+
+    # Commit 11: 语义污点引擎(可选,--semantic 开启)
+    if args.semantic:
+        from core.semantic_taint import SemanticTaintGraph
+        stg = SemanticTaintGraph(agent_model)
+        flows = stg.enrich(flows)
 
     # 序列化
     out = []
@@ -298,10 +311,15 @@ def main():
             "source_location": f.source.source_location,
             "sink_kind": f.sink.kind.value,
             "sink_location": f.sink.source_location,
+            # Commit 11: path 原本被遗漏(从不序列化),现补上;confidence/feature_type 是新字段
+            "path": f.path,
             "sanitizers": f.sanitizers,
             "blocked": f.blocked,
             "exploitable": f.is_exploitable,
             "severity": f.severity,
+            "confidence": f.confidence,
+            "feature_type": f.feature_type,
+            "llm_hops": f.llm_hops,
         })
 
     Path(args.output).write_text(json.dumps(out, indent=2, ensure_ascii=False))

@@ -52,6 +52,8 @@ class AgentModel:
     dangerous_sinks: list[dict] = field(default_factory=list)
     entry_points: list[dict] = field(default_factory=list)
     files_scanned: int = 0
+    # Commit 11: LLM 调用点(语义污点引擎用 —— 需要知道哪些值流经 LLM)
+    llm_invocations: list[dict] = field(default_factory=list)
 
 
 # ============ 模式识别 ============
@@ -178,6 +180,8 @@ class ASTExtractor:
             self._extract_sinks(source, path)
             # 入口点
             self._extract_entry_points(source, path)
+            # Commit 11: LLM 调用点(语义污点引擎用)
+            self._extract_llm_invocations(source, path)
 
         # 评估整体风险
         self._assess_overall()
@@ -446,6 +450,66 @@ class ASTExtractor:
                     "line": line_no
                 })
 
+    # ----- LLM 调用点 (Commit 11: 语义污点引擎依赖) -----
+    # 这些是"值流经 LLM"的节点 —— 语义污点引擎需要它们来计算 LLM hop 的传播概率。
+    # 不建模 LLM 节点,就无法区分 "用户输入 → 工具" (无 LLM) 与
+    # "用户输入 → LLM → 工具" (有 LLM,需概率传播)。
+    def _extract_llm_invocations(self, source: str, path: Path):
+        rel = str(path.relative_to(self.source_dir))
+        # LangChain / 通用:ChatOpenAI(...) / client.chat.completions.create(...) / .invoke(...) / .bind_tools(...)
+        # 用 AST 精确抽取(比正则更准)
+        try:
+            tree = ast.parse(source)
+            for node in ast.walk(tree):
+                if not isinstance(node, ast.Call):
+                    continue
+                callee = ""
+                try:
+                    callee = ast.unparse(node.func)
+                except Exception:
+                    continue
+                # 匹配 LLM 调用模式
+                is_llm = False
+                framework = "unknown"
+                if re.search(r'ChatOpenAI|ChatAnthropic|ChatGoogleGenerativeAI|ChatDeepSeek|ChatLiteLLM', callee):
+                    is_llm = True
+                    framework = "langchain_chat"
+                elif re.search(r'chat\.completions\.create|completions\.create', callee):
+                    is_llm = True
+                    framework = "openai_sdk"
+                elif re.search(r'\.invoke\s*\(|\.predict\s*\(|\.generate\s*\(', callee):
+                    # .invoke() / .predict() / .generate() — 可能是 LLM 也可能是工具,
+                    # 只有当对象名提示是 LLM 时才记(hardcode 常见命名)
+                    parent = ""
+                    try:
+                        parent = ast.unparse(node.func.value) if isinstance(node.func, ast.Attribute) else ""
+                    except Exception:
+                        pass
+                    if re.search(r'llm|chat|model|agent|chain|runner', parent, re.IGNORECASE):
+                        is_llm = True
+                        framework = "invoke_on_llm"
+
+                if not is_llm:
+                    continue
+
+                # 试图抽 inputs 变量(第一个位置参数)
+                inputs_var = ""
+                if node.args:
+                    try:
+                        inputs_var = ast.unparse(node.args[0])
+                    except Exception:
+                        pass
+
+                self.model.llm_invocations.append({
+                    "file": rel,
+                    "line": node.lineno,
+                    "callee": callee[:80],
+                    "framework": framework,
+                    "inputs_var": inputs_var[:60],
+                })
+        except Exception:
+            pass
+
     # ----- 整体评估 -----
     def _assess_overall(self):
         """基于收集的信息评估整体安全态势"""
@@ -485,6 +549,7 @@ class ASTExtractor:
             "observability": model.observability,
             "dangerous_sinks": model.dangerous_sinks,
             "entry_points": model.entry_points,
+            "llm_invocations": model.llm_invocations,
         }
 
 
