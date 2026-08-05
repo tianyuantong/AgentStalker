@@ -104,6 +104,10 @@ class MCPAuditor:
         findings.extend(self.detect_tool_squatting())
         findings.extend(self.detect_description_poisoning())
         findings.extend(self.detect_token_passthrough())
+        # Rust 端 MCP 检测(Rust agent_model 的 mcp_servers 由 ast_extractor_rust 产生,
+        # 当前结构无 tools[] —— Rust 工具名抽取待后续增强,见 docs/v2-roadmap.md)。
+        # 现阶段对 Rust MCP server 源码做 token passthrough + 描述投毒扫描。
+        findings.extend(self._audit_rust_mcp_servers())
         return findings
 
     # ============ 1. 工具名冲突 (R-MCP-SQUAT-001) ============
@@ -258,6 +262,87 @@ class MCPAuditor:
             if srv.get("file") == rel_file:
                 return srv.get("name", rel_file)
         return rel_file
+
+    # ============ Rust 端 MCP 检测(Commit 10)============
+    # Rust MCP server 的 mcp_servers[] 由 ast_extractor_rust.py 产生,当前结构
+    # {name, file, line, match} 无 tools[](Rust 工具名抽取待后续增强)。
+    # 现阶段对 Rust MCP server 源码做:
+    # - token passthrough 扫描(复用 TOKEN_PASSTHROUGH_PATTERNS,但加 Rust 的 reqwest/ureq 模式)
+    # - 描述投毒扫描(扫 #[tool] 宏旁的 doc comment)
+    # 完整 Rust 工具名 squatting 检测需要先增强 ast_extractor_rust 抽工具名(记入路线图)。
+    def _audit_rust_mcp_servers(self) -> list[Finding]:
+        findings: list[Finding] = []
+        if not self.source_dir or not self.source_dir.exists():
+            return findings
+
+        # Rust 特有的 token passthrough 模式
+        rust_token_patterns = [
+            # reqwest: .header("Authorization", ...)
+            re.compile(r'\.header\s*\(\s*["\']Authorization["\']', re.IGNORECASE),
+            # ureq: .set("Authorization", ...)
+            re.compile(r'\.set\s*\(\s*["\']Authorization["\']', re.IGNORECASE),
+            # reqwest bearer: .bearer_auth(token)
+            re.compile(r'\.bearer_auth\s*\(', re.IGNORECASE),
+        ]
+        # Rust doc comment(描述投毒)模式://! 或 /// 开头
+        rust_doc_pattern = re.compile(r'^\s*(?://!|///)\s*(.+)$', re.MULTILINE)
+
+        for srv in self.model.get("mcp_servers", []):
+            # 只看 Rust MCP server(name 字段是 RUST_MCP_PATTERNS 的 key 名,如 mcp_qualified)
+            srv_name = srv.get("name", "")
+            f = srv.get("file")
+            if not f:
+                continue
+            p = self.source_dir / f
+            if not p.exists() or p.suffix != ".rs":
+                continue
+            try:
+                content = p.read_text(encoding="utf-8", errors="ignore")
+            except Exception:
+                continue
+            rel = str(p.relative_to(self.source_dir))
+
+            # 1. token passthrough
+            has_exchange = bool(TOKEN_EXCHANGE_SIGNAL.search(content))
+            confidence = TOKEN_PASSTHROUGH_CONFIDENCE
+            if has_exchange:
+                confidence *= 0.5
+            for pat in rust_token_patterns:
+                for m in pat.finditer(content):
+                    line_no = content[:m.start()].count("\n") + 1
+                    findings.append(Finding(
+                        rule_id="R-MCP-TOKEN-001",
+                        severity="high" if confidence >= 0.7 else "medium",
+                        confidence=round(confidence, 2),
+                        server_name=srv_name or rel,
+                        location=f"{rel}:{line_no}",
+                        evidence=f"rust: {m.group(0)[:80]}",
+                        description=(
+                            f"Rust MCP server forwards Authorization header to downstream"
+                            f"{' without token exchange' if not has_exchange else ' (exchange signal detected, reduced confidence)'}."
+                        ),
+                    ))
+                    break  # 每文件只报一次
+
+            # 2. 描述投毒(扫 doc comment)
+            for dm in rust_doc_pattern.finditer(content):
+                doc_line = dm.group(1)
+                matched = [p.pattern for p in SUSPICIOUS_DESCRIPTION_PATTERNS if p.search(doc_line)]
+                if matched:
+                    line_no = content[:dm.start()].count("\n") + 1
+                    findings.append(Finding(
+                        rule_id="R-MCP-DESC-001",
+                        severity="high",
+                        confidence=DESC_POISONING_CONFIDENCE,
+                        server_name=srv_name or rel,
+                        location=f"{rel}:{line_no}",
+                        evidence=f"rust doc comment matched: {matched}; {doc_line[:80]!r}",
+                        description=(
+                            f"Rust MCP server doc comment contains suspicious pattern(s) "
+                            f"indicative of instruction injection."
+                        ),
+                    ))
+        return findings
 
 
 def findings_to_json(findings: list[Finding]) -> str:

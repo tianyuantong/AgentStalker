@@ -199,6 +199,10 @@ chains:
     assertions:
       - mcp.tool_description_audit_failed
       - http_request_to_external
+    # Commit 10: assertion 实现映射(原为悬空断言,无 monitor 产生事件)
+    #   mcp.tool_description_audit_failed ← MCPMonitor event_type=description_poisoning
+    #                                   ← MCPAuditor R-MCP-DESC-001 (静态)
+    #   http_request_to_external          ← NetworkMonitor (已有)
     detection:
       static:
         - "MCP 工具描述无签名"
@@ -235,6 +239,10 @@ chains:
       - mcp.request_includes_user_token
       - mcp.no_token_exchange
       - cross_user_data_leak
+    # Commit 10: assertion 实现映射(原为悬空断言)
+    #   mcp.request_includes_user_token ← MCPMonitor event_type=token_passthrough
+    #   mcp.no_token_exchange           ← MCPAuditor R-MCP-TOKEN-001 (静态源码扫)
+    #   cross_user_data_leak            ← 运行时观察(需 mock-db 多用户 fixture)
     detection:
       static:
         - "request.headers['Authorization'] 直接透传"
