@@ -13,6 +13,7 @@ import argparse
 import json
 import os
 import subprocess
+import sys
 import time
 import uuid
 from pathlib import Path
@@ -122,8 +123,8 @@ def fetch_litellm_logs() -> dict:
         r = requests.get(f"{LITELLM_API}/logs", timeout=5)
         if r.ok:
             return r.json()
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[!] fetch_litellm_logs failed ({LITELLM_API}): {e}", file=sys.stderr)
     return {"messages": [], "tool_calls": []}
 
 
@@ -142,8 +143,8 @@ def fetch_mailhog_messages() -> list:
                 }
                 for m in data.get("items", [])
             ]
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[!] fetch_mailhog_messages failed ({MAILHOG_API}): {e}", file=sys.stderr)
     return []
 
 
@@ -153,8 +154,8 @@ def fetch_wiremock_requests() -> list:
         r = requests.get(f"{WIREMOCK_API}/all", timeout=5)
         if r.ok:
             return r.json().get("requests", [])
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[!] fetch_wiremock_requests failed ({WIREMOCK_API}): {e}", file=sys.stderr)
     return []
 
 

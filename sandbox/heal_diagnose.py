@@ -20,6 +20,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import sys
 from dataclasses import dataclass, asdict, field
 from pathlib import Path
 from typing import Any
@@ -150,7 +151,6 @@ def main():
     elif args.error_text:
         text = args.error_text
     elif not sys.stdin.isatty():
-        import sys
         text = sys.stdin.read()
     else:
         print("请提供 --error-text / --error-file / 通过 stdin 输入", file=sys.stderr)
@@ -188,5 +188,4 @@ def main():
 
 
 if __name__ == "__main__":
-    import sys
     sys.exit(main())

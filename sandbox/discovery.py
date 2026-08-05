@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import re
+import sys
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import Literal
@@ -317,8 +318,8 @@ class AgentDiscovery:
                         for line in content.splitlines()
                         if line.strip() and not line.startswith("#") and "=" not in line.split(" ")[0]
                     ][:50]
-                except Exception:
-                    pass
+                except Exception as e:
+                    print(f"[!] dependency parse failed ({req_file}): {e}", file=sys.stderr)
 
     # ----- 建议 -----
     def _recommend(self):
