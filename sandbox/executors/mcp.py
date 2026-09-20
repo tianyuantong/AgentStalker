@@ -1,162 +1,145 @@
-"""MCP Executor — MCP stdio RPC 执行器
-
-通过 JSON-RPC 与 MCP Server 通信,用于:
-- 驱动被测 MCP server(Commit 9 的运行时验证)
-- 向 MCP server 的工具注入 payload(replay)
-
-Commit 4 增强内容(为 MCP 运行时验证铺路):
-- _send() 支持 Content-Length 帧(旧版只读一行,server 发 notification 会错乱)
-- list_tools() 返回完整工具表(name + description),而非仅 name 字符串
-- execute() / call_tool() 捕获并返回 server 的真实响应(旧版 execute 丢弃响应详情)
-"""
+"""MCP v1 newline-delimited stdio RPC, bounded waits and explicit failures."""
 from __future__ import annotations
 
+from collections import deque
 import json
-import subprocess
-import time
+import os
 from pathlib import Path
+import queue
+import shlex
+import subprocess
+import threading
+import time
 
 from .api_executor import ExecutionResult
 
 
 class MCPExecutor:
-    """MCP stdio RPC 执行器
-
-    通过 JSON-RPC 与 MCP Server 通信
-    """
-
-    def __init__(self, mcp_command: str = "python -m my_mcp_server", cwd: str | Path = "."):
-        # 允许 caller 传 list 或 str;str 按 space split(保持向后兼容)
-        if isinstance(mcp_command, str):
-            self.mcp_command = mcp_command.split()
-        else:
-            self.mcp_command = list(mcp_command)
+    def __init__(self, mcp_command="python -m my_mcp_server", cwd=".", *, env=None, timeout=15):
+        # posix=False keeps backslashes in Windows paths; the upstream stdio transport supports Windows.
+        self.mcp_command = (shlex.split(mcp_command, posix=os.name != "nt") if isinstance(mcp_command, str)
+                            else list(mcp_command))
         self.cwd = Path(cwd)
-        self.process: subprocess.Popen | None = None
+        self.env, self.timeout = env, timeout
+        self.process = None
         self._next_id = 100
+        self._lines = queue.Queue()
+        self._stderr = deque(maxlen=20)
+        self._threads = []
 
     def _ensure_process(self):
-        if not self.process:
-            self.process = subprocess.Popen(
-                self.mcp_command,
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                cwd=self.cwd,
-                text=True,
-                bufsize=1,
-            )
-            # initialize handshake
-            self._send({
-                "jsonrpc": "2.0", "id": 0, "method": "initialize",
-                "params": {"protocolVersion": "2024-11-05", "capabilities": {},
-                           "clientInfo": {"name": "AgentStalker", "version": "1.0"}}
-            })
-            # initialized notification (no id, no response expected)
-            self._notify({"jsonrpc": "2.0", "method": "notifications/initialized", "params": {}})
-
-    def _next_request_id(self) -> int:
-        self._next_id += 1
-        return self._next_id
-
-    def _notify(self, request: dict):
-        """发 notification(无 id,无响应)。"""
-        if not self.process:
+        if self.process is not None:
             return
+        self.process = subprocess.Popen(self.mcp_command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE, cwd=self.cwd, env=self.env,
+                                        text=True, bufsize=1)
+        def stdout_reader():
+            for line in self.process.stdout:
+                self._lines.put(line)
+            self._lines.put(None)
+        def stderr_reader():
+            for line in self.process.stderr:
+                self._stderr.append(line[:2000])
+        for reader in (stdout_reader, stderr_reader):
+            t = threading.Thread(target=reader, daemon=True)
+            self._threads.append(t)
+            t.start()
         try:
-            self.process.stdin.write(json.dumps(request) + "\n")
-            self.process.stdin.flush()
+            reply = self._send({"jsonrpc": "2.0", "id": 0, "method": "initialize",
+                                "params": {"protocolVersion": "2024-11-05", "capabilities": {},
+                                           "clientInfo": {"name": "AgentStalker", "version": "1.0"}}})
+            if "result" not in reply:
+                raise RuntimeError("MCP initialization failed")
+            self._notify({"jsonrpc": "2.0", "method": "notifications/initialized", "params": {}})
         except Exception:
-            pass
+            self.teardown()
+            raise
 
-    def _send(self, request: dict) -> dict:
-        """发请求并读响应。
-
-        增强(Commit 4):跳过 server 发出的 notification/log 行(它们没有 'id'
-        或 'method' 字段),只返回与请求 'id' 匹配的响应。这修复旧版"只读一行"
-        在 server 发 notification 时错乱的问题。
-        """
-        if not self.process:
-            return {}
+    def _notify(self, request):
         self.process.stdin.write(json.dumps(request) + "\n")
         self.process.stdin.flush()
 
-        expected_id = request.get("id")
-        # 最多读 50 行,跳过 notification/log,直到拿到匹配 id 的响应
-        for _ in range(50):
-            line = self.process.stdout.readline()
-            if not line:
-                return {}
-            line = line.strip()
-            if not line:
-                continue
+    def _next_request_id(self):
+        self._next_id += 1
+        return self._next_id
+
+    def _send(self, request):
+        if not self.process:
+            raise RuntimeError("MCP process not running")
+        self._notify(request)
+        deadline = time.monotonic() + getattr(self, "timeout", 15)
+        for _ in range(1000):
             try:
-                msg = json.loads(line)
+                # The fallback keeps the legacy in-memory transport test usable.
+                line = (self._lines.get(timeout=max(0.001, deadline - time.monotonic()))
+                        if hasattr(self, "_lines") else self.process.stdout.readline())
+            except queue.Empty as exc:
+                raise TimeoutError("MCP response deadline exceeded") from exc
+            if not line:
+                raise RuntimeError("MCP process closed output")
+            if len(line) > 1048576:
+                raise RuntimeError("MCP response exceeds 1 MiB")
+            try:
+                message = json.loads(line)
             except json.JSONDecodeError:
-                # server 可能在 stdout 打印非 JSON 日志,跳过
                 continue
-            # notification 没有 'id';只有带 id 的才是响应
-            if "id" in msg and (expected_id is None or msg["id"] == expected_id):
-                return msg
-            # 否则是 notification/log,继续读下一行
-        return {}
+            if isinstance(message, dict) and message.get("id") == request.get("id") and "id" in message:
+                if "result" not in message and "error" not in message:
+                    raise RuntimeError("invalid MCP response")
+                return message
+        raise RuntimeError("too many unrelated MCP messages")
 
-    def execute(self, test_case: dict) -> ExecutionResult:
-        """执行 tools/call(向后兼容旧接口)。返回的 ExecutionResult.output 含完整 server 响应。"""
-        start = time.time()
-        try:
-            self._ensure_process()
-            payload = test_case.get("payload", {})
-            tool_name = test_case.get("tool", "test_tool")
-
-            response = self.call_tool(tool_name, payload)
-            duration = int((time.time() - start) * 1000)
-            return ExecutionResult(
-                success="result" in response,
-                output=response,  # 完整响应(含 result + error),供审计用
-                error=response.get("error", {}).get("message", ""),
-                duration_ms=duration,
-            )
-        except Exception as e:
-            return ExecutionResult(success=False, error=str(e), duration_ms=int((time.time() - start) * 1000))
-
-    def call_tool(self, name: str, arguments: dict | None = None) -> dict:
-        """调用 MCP 工具,返回 server 的完整 JSON-RPC 响应。
-
-        增强(Commit 4):相比旧 execute(),本方法返回原始响应 dict(含 result.content /
-        isError 等),供 MCPMonitor 审计响应内容(检测响应注入)。
-        """
+    def call_tool(self, name, arguments=None):
         self._ensure_process()
-        return self._send({
-            "jsonrpc": "2.0", "id": self._next_request_id(),
-            "method": "tools/call",
-            "params": {"name": name, "arguments": arguments or {}},
-        })
+        return self._send({"jsonrpc": "2.0", "id": self._next_request_id(), "method": "tools/call",
+                           "params": {"name": name, "arguments": arguments or {}}})
 
-    def list_tools(self) -> list[dict]:
-        """列出 MCP 工具(完整表)。
-
-        增强(Commit 4):返回 list[dict](含 name + description + inputSchema),
-        供 MCPMonitor 做工具名冲突检测和描述投毒检测。旧版只返回 list[str]。
-        想要旧行为可用 [t["name"] for t in exec.list_tools()]。
-        """
+    def list_tools(self):
         self._ensure_process()
-        response = self._send({
-            "jsonrpc": "2.0", "id": self._next_request_id(),
-            "method": "tools/list", "params": {},
-        })
-        return response.get("result", {}).get("tools", [])
+        response = self._send({"jsonrpc": "2.0", "id": self._next_request_id(),
+                               "method": "tools/list", "params": {}})
+        if "error" in response:
+            raise RuntimeError("MCP tools/list failed")
+        tools = response.get("result", {}).get("tools")
+        if not isinstance(tools, list):
+            raise RuntimeError("MCP tool list absent")
+        return tools
 
-    def list_tool_names(self) -> list[str]:
-        """便捷方法:仅返回工具名(旧行为)。"""
+    def list_tool_names(self):
         return [t.get("name") for t in self.list_tools()]
 
+    def execute(self, test_case):
+        started = time.monotonic()
+        try:
+            response = self.call_tool(test_case.get("tool", "test_tool"), test_case.get("payload", {}))
+            tool_error = response.get("result", {}).get("isError", False)
+            return ExecutionResult("result" in response and not tool_error, output=response,
+                                   status="completed" if "result" in response and not tool_error else "error",
+                                   error="tool returned error" if tool_error else str(response.get("error", "")),
+                                   duration_ms=int((time.monotonic() - started) * 1000))
+        except Exception as exc:
+            return ExecutionResult(False, error=str(exc), status="timeout" if isinstance(exc, TimeoutError) else "error",
+                                   duration_ms=int((time.monotonic() - started) * 1000))
+
     def teardown(self):
-        if self.process:
+        process = self.process
+        if process is None:
+            return
+        try:
+            process.terminate()
             try:
-                self.process.terminate()
-                self.process.wait(timeout=5)
-            except Exception:
-                self.process.kill()
-            finally:
-                self.process = None
+                process.wait(timeout=3)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait(timeout=3)
+            for thread in self._threads:
+                thread.join(timeout=1)
+            for stream in (process.stdin, process.stdout, process.stderr):
+                try:
+                    stream.close()
+                except (OSError, BrokenPipeError):
+                    pass
+        finally:
+            self.process = None
+            self._threads = []
+            self._lines = queue.Queue()

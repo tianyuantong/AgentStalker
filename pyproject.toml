@@ -20,25 +20,26 @@ dependencies = [
 [project.optional-dependencies]
 # Runtime MCP audit (driving real MCP servers for dynamic verification)
 mcp = [
-    "mcp>=1.0",
-    "fastmcp>=0.2",
+    "mcp>=1.0,<2",
 ]
 # Test suite
 test = [
     "pytest>=8.0",
-    "mcp>=1.0",
-    "fastmcp>=0.2",
+    "jsonschema>=4",
+    "mcp>=1.0,<2",
 ]
 # All optional extras combined
 all = [
     "pytest>=8.0",
-    "mcp>=1.0",
-    "fastmcp>=0.2",
+    "jsonschema>=4",
+    "mcp>=1.0,<2",
 ]
 
-[tool.setuptools]
-# Treat the top-level packages as flat; no src/ layout.
-packages = ["core", "sandbox"]
+[tool.setuptools.packages.find]
+include = ["core*", "sandbox*", "testbeds*"]
+
+[tool.setuptools.package-data]
+sandbox = ["*.json", "data/*.yaml"]
 
 [tool.pytest.ini_options]
 minversion = "8.0"

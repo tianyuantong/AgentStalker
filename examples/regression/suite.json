@@ -1,0 +1,90 @@
+{
+  "schema_version": 2,
+  "description": "Tool-boundary paired regression, no LLM",
+  "cases": [
+    {
+      "id": "file-direct",
+      "kind": "attack",
+      "group": "file",
+      "operation": "read_file",
+      "selector": "direct"
+    },
+    {
+      "id": "file-parent",
+      "kind": "attack",
+      "group": "file",
+      "operation": "read_file",
+      "selector": "parent"
+    },
+    {
+      "id": "file-symlink",
+      "kind": "attack",
+      "group": "file",
+      "operation": "read_file",
+      "selector": "symlink"
+    },
+    {
+      "id": "file-normal-ordinary",
+      "kind": "normal",
+      "group": "file",
+      "operation": "read_file",
+      "selector": "ordinary"
+    },
+    {
+      "id": "file-normal-sibling-name",
+      "kind": "normal",
+      "group": "file",
+      "operation": "read_file",
+      "selector": "sibling-name"
+    },
+    {
+      "id": "file-normal-nested",
+      "kind": "normal",
+      "group": "file",
+      "operation": "read_file",
+      "selector": "nested"
+    },
+    {
+      "id": "proxy-one",
+      "kind": "attack",
+      "group": "proxy",
+      "operation": "proxy_request",
+      "selector": "private-one"
+    },
+    {
+      "id": "proxy-two",
+      "kind": "attack",
+      "group": "proxy",
+      "operation": "proxy_request",
+      "selector": "private-two"
+    },
+    {
+      "id": "proxy-three",
+      "kind": "attack",
+      "group": "proxy",
+      "operation": "proxy_request",
+      "selector": "private-three"
+    },
+    {
+      "id": "proxy-normal-one",
+      "kind": "normal",
+      "group": "proxy",
+      "operation": "proxy_request",
+      "selector": "public-one"
+    },
+    {
+      "id": "proxy-normal-two",
+      "kind": "normal",
+      "group": "proxy",
+      "operation": "proxy_request",
+      "selector": "public-two"
+    },
+    {
+      "id": "proxy-normal-three",
+      "kind": "normal",
+      "group": "proxy",
+      "operation": "proxy_request",
+      "selector": "public-three"
+    }
+  ]
+}

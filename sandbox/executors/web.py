@@ -47,7 +47,8 @@ class WebExecutor:
                 return self._single(test_case)
 
         except Exception as e:
-            return ExecutionResult(success=False, error=str(e), duration_ms=int((time.time() - start) * 1000))
+            return ExecutionResult(success=False, error=str(e), duration_ms=int((time.time() - start) * 1000),
+                                   status="error")
 
     def _single(self, test_case: dict) -> ExecutionResult:
         """单轮：发送一条消息，等待响应"""
@@ -59,7 +60,7 @@ class WebExecutor:
             "input[type=text], input:not([type]), textarea, [contenteditable=true]"
         )
         if not chat_input:
-            return ExecutionResult(success=False, error="No chat input found")
+            return ExecutionResult(success=False, error="No chat input found", status="error")
 
         chat_input.fill(message)
         chat_input.press("Enter")

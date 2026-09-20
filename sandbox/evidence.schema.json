@@ -1,43 +1,91 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "AgentStalker Evidence Schema",
-  "description": "Stage 3 沙箱动态验证产出的 evidence JSON 结构",
+  "description": "Canonical v2 evidence. Legacy definitions remain addressable explicitly; never infer execution health from legacy input.",
   "definitions": {
-
     "agent_model": {
       "type": "object",
       "description": "Stage 1 静态建模产物",
-      "required": ["project", "type", "tools"],
+      "required": [
+        "project",
+        "type",
+        "tools"
+      ],
       "properties": {
-        "project": { "type": "string" },
-        "type": { "type": "string", "enum": ["LangChain", "AutoGen", "CrewAI", "MCP", "LlamaIndex", "Custom"] },
+        "project": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "LangChain",
+            "AutoGen",
+            "CrewAI",
+            "MCP",
+            "LlamaIndex",
+            "Custom"
+          ]
+        },
         "tools": {
           "type": "array",
-          "items": { "$ref": "#/definitions/tool_definition" }
+          "items": {
+            "$ref": "#/definitions/tool_definition"
+          }
         },
         "system_prompt": {
           "type": "object",
           "properties": {
-            "raw": { "type": "string" },
-            "instruction_blocks": { "type": "array", "items": { "type": "string" } },
-            "data_injection_points": { "type": "array", "items": { "type": "string" } }
+            "raw": {
+              "type": "string"
+            },
+            "instruction_blocks": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "data_injection_points": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
           }
         },
         "permissions": {
           "type": "object",
           "properties": {
-            "role_tool_map": { "type": "object" },
-            "auth_model": { "type": "string" },
-            "token_exchange": { "type": "boolean" }
+            "role_tool_map": {
+              "type": "object"
+            },
+            "auth_model": {
+              "type": "string"
+            },
+            "token_exchange": {
+              "type": "boolean"
+            }
           }
         },
         "memory": {
           "type": "object",
           "properties": {
-            "type": { "type": "string" },
-            "read_interface": { "type": "string" },
-            "write_interface": { "type": "string" },
-            "isolation": { "type": "string", "enum": ["user", "tenant", "none"] }
+            "type": {
+              "type": "string"
+            },
+            "read_interface": {
+              "type": "string"
+            },
+            "write_interface": {
+              "type": "string"
+            },
+            "isolation": {
+              "type": "string",
+              "enum": [
+                "user",
+                "tenant",
+                "none"
+              ]
+            }
           }
         },
         "mcp_servers": {
@@ -45,92 +93,234 @@
           "items": {
             "type": "object",
             "properties": {
-              "name": { "type": "string" },
-              "trust": { "type": "string", "enum": ["trusted", "unknown", "untrusted"] },
-              "tools": { "type": "array", "items": { "type": "string" } }
+              "name": {
+                "type": "string"
+              },
+              "trust": {
+                "type": "string",
+                "enum": [
+                  "trusted",
+                  "unknown",
+                  "untrusted"
+                ]
+              },
+              "tools": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
             }
           }
         },
         "hitl": {
           "type": "object",
           "properties": {
-            "trigger": { "type": "string", "enum": ["deterministic_rule", "model_decision", "none"] },
-            "approval_queue": { "type": "string" },
-            "evidence_pack": { "type": "boolean" }
+            "trigger": {
+              "type": "string",
+              "enum": [
+                "deterministic_rule",
+                "model_decision",
+                "none"
+              ]
+            },
+            "approval_queue": {
+              "type": "string"
+            },
+            "evidence_pack": {
+              "type": "boolean"
+            }
           }
         },
         "observability": {
           "type": "object",
           "properties": {
-            "trace": { "type": "string" },
-            "audit_log": { "type": "string" },
-            "evals": { "type": "boolean" }
+            "trace": {
+              "type": "string"
+            },
+            "audit_log": {
+              "type": "string"
+            },
+            "evals": {
+              "type": "boolean"
+            }
           }
         }
       }
     },
-
     "tool_definition": {
       "type": "object",
-      "required": ["name", "description", "parameters_schema", "risk_level"],
+      "required": [
+        "name",
+        "description",
+        "parameters_schema",
+        "risk_level"
+      ],
       "properties": {
-        "name": { "type": "string" },
-        "description": { "type": "string" },
-        "parameters_schema": { "type": "object" },
-        "risk_level": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
-        "requires_approval": { "type": "boolean" },
-        "scope": { "type": "array", "items": { "type": "string" } },
-        "timeout_ms": { "type": "integer" },
-        "rate_limit": { "type": "string" },
-        "audit_log": { "type": "string" }
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "parameters_schema": {
+          "type": "object"
+        },
+        "risk_level": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high",
+            "critical"
+          ]
+        },
+        "requires_approval": {
+          "type": "boolean"
+        },
+        "scope": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "timeout_ms": {
+          "type": "integer"
+        },
+        "rate_limit": {
+          "type": "string"
+        },
+        "audit_log": {
+          "type": "string"
+        }
       }
     },
-
     "attack_case": {
       "type": "object",
-      "required": ["id", "name", "severity", "steps", "assertions"],
+      "required": [
+        "id",
+        "name",
+        "severity",
+        "steps",
+        "assertions"
+      ],
       "properties": {
-        "id": { "type": "string" },
-        "name": { "type": "string" },
-        "risk_dimension": { "type": "array", "items": { "type": "string" } },
-        "severity": { "type": "string", "enum": ["critical", "high", "medium", "low"] },
-        "description": { "type": "string" },
-        "prerequisites": { "type": "array", "items": { "type": "string" } },
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "risk_dimension": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "critical",
+            "high",
+            "medium",
+            "low"
+          ]
+        },
+        "description": {
+          "type": "string"
+        },
+        "prerequisites": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "steps": {
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["turn", "role", "content"],
+            "required": [
+              "turn",
+              "role",
+              "content"
+            ],
             "properties": {
-              "turn": { "type": "integer" },
-              "role": { "type": "string", "enum": ["user", "assistant", "system"] },
-              "content": { "type": "string" },
-              "expected": { "type": "string" }
+              "turn": {
+                "type": "integer"
+              },
+              "role": {
+                "type": "string",
+                "enum": [
+                  "user",
+                  "assistant",
+                  "system"
+                ]
+              },
+              "content": {
+                "type": "string"
+              },
+              "expected": {
+                "type": "string"
+              }
             }
           }
         },
         "assertions": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         }
       }
     },
-
     "evidence": {
       "type": "object",
-      "required": ["test_id", "case", "verdict", "logs"],
+      "required": [
+        "test_id",
+        "case",
+        "verdict",
+        "logs"
+      ],
       "properties": {
-        "test_id": { "type": "string" },
-        "case": { "$ref": "#/definitions/attack_case" },
+        "test_id": {
+          "type": "string"
+        },
+        "case": {
+          "$ref": "#/definitions/attack_case"
+        },
         "verdict": {
           "type": "object",
-          "required": ["result", "confidence"],
+          "required": [
+            "result",
+            "confidence"
+          ],
           "properties": {
-            "result": { "type": "string", "enum": ["vulnerable", "safe", "inconclusive", "error"] },
-            "confidence": { "type": "string", "enum": ["high", "medium", "low"] },
-            "vulnerability_type": { "type": "string" },
-            "severity": { "type": "string" },
-            "owasp_id": { "type": "string" }
+            "result": {
+              "type": "string",
+              "enum": [
+                "vulnerable",
+                "safe",
+                "inconclusive",
+                "error"
+              ]
+            },
+            "confidence": {
+              "type": "string",
+              "enum": [
+                "high",
+                "medium",
+                "low"
+              ]
+            },
+            "vulnerability_type": {
+              "type": "string"
+            },
+            "severity": {
+              "type": "string"
+            },
+            "owasp_id": {
+              "type": "string"
+            }
           }
         },
         "logs": {
@@ -139,23 +329,37 @@
             "app_logs": {
               "type": "object",
               "properties": {
-                "requests": { "type": "array" },
-                "responses": { "type": "array" }
+                "requests": {
+                  "type": "array"
+                },
+                "responses": {
+                  "type": "array"
+                }
               }
             },
             "llm_logs": {
               "type": "object",
               "properties": {
-                "messages": { "type": "array" },
+                "messages": {
+                  "type": "array"
+                },
                 "tool_calls": {
                   "type": "array",
                   "items": {
                     "type": "object",
                     "properties": {
-                      "tool": { "type": "string" },
-                      "args": { "type": "object" },
-                      "result": { "type": "string" },
-                      "executed": { "type": "boolean" }
+                      "tool": {
+                        "type": "string"
+                      },
+                      "args": {
+                        "type": "object"
+                      },
+                      "result": {
+                        "type": "string"
+                      },
+                      "executed": {
+                        "type": "boolean"
+                      }
                     }
                   }
                 }
@@ -166,31 +370,299 @@
               "items": {
                 "type": "object",
                 "properties": {
-                  "type": { "type": "string" },
-                  "bin": { "type": "string" },
-                  "args": { "type": "string" },
-                  "container": { "type": "string" },
-                  "timestamp": { "type": "string" }
+                  "type": {
+                    "type": "string"
+                  },
+                  "bin": {
+                    "type": "string"
+                  },
+                  "args": {
+                    "type": "string"
+                  },
+                  "container": {
+                    "type": "string"
+                  },
+                  "timestamp": {
+                    "type": "string"
+                  }
                 }
               }
             },
             "mock_logs": {
               "type": "object",
               "properties": {
-                "emails_sent": { "type": "array" },
-                "http_requests_received": { "type": "array" },
-                "db_state_diff": { "type": "object" }
+                "emails_sent": {
+                  "type": "array"
+                },
+                "http_requests_received": {
+                  "type": "array"
+                },
+                "db_state_diff": {
+                  "type": "object"
+                }
               }
             },
-            "agent_reply_text": { "type": "string" }
+            "agent_reply_text": {
+              "type": "string"
+            }
           }
         },
         "matched_signatures": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "description": "匹配到的 detection_signatures（来自 injection_templates.yaml）"
         }
       }
+    },
+    "evidence_v2": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "test_case_id",
+        "context",
+        "execution",
+        "collection",
+        "required_sources",
+        "events",
+        "checks",
+        "boundary"
+      ],
+      "properties": {
+        "evidence_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "test_case_id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "severity": {
+          "type": "string"
+        },
+        "layers": {
+          "type": "array"
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "event_id",
+              "source",
+              "data",
+              "run_id",
+              "case_id",
+              "attempt_id",
+              "session_id"
+            ],
+            "properties": {
+              "run_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "case_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "attempt_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "session_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "event_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "source": {
+                "type": "string"
+              },
+              "data": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "related_owasp": {
+          "type": "array"
+        },
+        "exploit_chain": {
+          "type": "array"
+        },
+        "raw_evidence_files": {
+          "type": "array"
+        },
+        "trace_id": {
+          "type": "string"
+        },
+        "user_id": {
+          "type": "string"
+        },
+        "agent_id": {
+          "type": "string"
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "impact": {
+          "type": "string"
+        },
+        "remediation": {
+          "type": "string"
+        },
+        "verdict": {
+          "type": "string"
+        },
+        "confidence": {
+          "type": "number"
+        },
+        "metadata": {
+          "type": "object"
+        },
+        "schema_version": {
+          "const": 2
+        },
+        "context": {
+          "type": "object",
+          "required": [
+            "run_id",
+            "case_id",
+            "attempt_id",
+            "session_id"
+          ],
+          "properties": {
+            "run_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "case_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "attempt_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "session_id": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        "execution": {
+          "type": "object",
+          "required": [
+            "status",
+            "reset_status"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "completed",
+                "error",
+                "timeout",
+                "not_run"
+              ]
+            },
+            "reset_status": {
+              "enum": [
+                "ok",
+                "error",
+                "unknown"
+              ]
+            }
+          }
+        },
+        "collection": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "status",
+              "window_complete",
+              "method"
+            ],
+            "properties": {
+              "status": {
+                "enum": [
+                  "ok",
+                  "error",
+                  "not_enabled"
+                ]
+              },
+              "window_complete": {
+                "type": "boolean"
+              },
+              "method": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "required_sources": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "boundary": {
+          "type": "string"
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "kind",
+              "type",
+              "source",
+              "expected"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "kind": {
+                "enum": [
+                  "impact",
+                  "normal"
+                ]
+              },
+              "type": {
+                "type": "string"
+              },
+              "source": {
+                "type": "string"
+              },
+              "expected": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "assertions": {
+          "type": "array"
+        }
+      },
+      "additionalProperties": false
     }
-  }
+  },
+  "$ref": "#/definitions/evidence_v2"
 }

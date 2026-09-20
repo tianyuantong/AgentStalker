@@ -1,0 +1,8 @@
+{
+  "type": "mcp-regression",
+  "timeout_seconds": 10,
+  "model": null,
+  "permissions": "file: allowed/ only; proxy: public endpoints only, never forward caller credentials",
+  "initial_state": "fresh isolated test tree and receiver per case",
+  "variant": "vulnerable"
+}
