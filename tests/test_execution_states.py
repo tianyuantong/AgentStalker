@@ -151,8 +151,11 @@ def test_http_cli_preserved_without_false_safety(tmp_path, monkeypatch, capsys):
 
 
 def test_mcp_command_string_keeps_windows_backslashes(monkeypatch):
-    import os
-    monkeypatch.setattr(os, 'name', 'nt')
+    # Patch only the executor module's view of os.name: patching the global os.name
+    # makes pathlib (<= 3.12) try to instantiate WindowsPath on POSIX and crash pytest.
+    import types
+    import sandbox.executors.mcp as mcp_module
+    monkeypatch.setattr(mcp_module, 'os', types.SimpleNamespace(name='nt'))
     ex = MCPExecutor(r'C:\Users\me\python.exe -m testbeds.mcp_mini_server.server')
     assert ex.mcp_command == [r'C:\Users\me\python.exe', '-m', 'testbeds.mcp_mini_server.server']
 
