@@ -1,0 +1,243 @@
+# Wheel installed into a fresh virtualenv in a temporary directory outside the checkout;
+# the 4-case paired suite runs from site-packages.
+
+$ /var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-wheel-check-1xzo49_q/venv/bin/python -m pip install --quiet <repo>/dist/agentstalker-1.0.0-py3-none-any.whl[test]
+
+[notice] A new release of pip is available: 25.3 -> 26.2.1
+[notice] To update, run: /var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-wheel-check-1xzo49_q/venv/bin/python -m pip install --upgrade pip
+exit=0
+
+$ /var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-wheel-check-1xzo49_q/venv/bin/python -c import json, sandbox, sandbox.regression as r; print(sandbox.__file__); print(json.dumps(r.fingerprints()))
+/var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-wheel-check-1xzo49_q/venv/lib/python3.13/site-packages/sandbox/__init__.py
+{"analyzer": "acf8dc25b033f027ade9fb8ab421a309c2f860dcff3c94c4f00cd3e654eb4c9f", "collector": "a318f5846ce16a2f9c6a8668db147caa41f3faa88d4c52fa7069a710f633ad99"}
+exit=0
+
+$ /var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-wheel-check-1xzo49_q/venv/bin/python -m sandbox.test_runner --config suite4.json --profile vulnerable.json --output runs/vulnerable
+{
+  "planned": 4,
+  "attempted": 4,
+  "execution_failures": 0,
+  "attack_cases": 2,
+  "confirmed_effects": 2,
+  "decidable_attacks": 2,
+  "inconclusive_attacks": 0,
+  "risk_only_attacks": 0,
+  "effect_rate": {
+    "numerator": 2,
+    "denominator": 2
+  },
+  "normal_passed": 2,
+  "normal_total": 2,
+  "normal_flow_exposures": 1
+}
+exit=0
+
+$ /var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-wheel-check-1xzo49_q/venv/bin/python -m sandbox.test_runner --config suite4.json --profile fixed.json --output runs/fixed
+{
+  "planned": 4,
+  "attempted": 4,
+  "execution_failures": 0,
+  "attack_cases": 2,
+  "confirmed_effects": 0,
+  "decidable_attacks": 2,
+  "inconclusive_attacks": 0,
+  "risk_only_attacks": 0,
+  "effect_rate": {
+    "numerator": 0,
+    "denominator": 2
+  },
+  "normal_passed": 2,
+  "normal_total": 2,
+  "normal_flow_exposures": 0
+}
+exit=0
+
+$ /var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-wheel-check-1xzo49_q/venv/bin/python -m sandbox.regression compare runs/vulnerable runs/fixed --output runs/comparison
+{
+  "status": "COMPARABLE",
+  "differences": [],
+  "rows": [
+    {
+      "case_id": "file-direct",
+      "kind": "attack",
+      "before": "exploited",
+      "after": "not_exploitable",
+      "result": "REMEDIATION_PASSED",
+      "before_reason": "effect_confirmed",
+      "after_reason": "not_reproduced_in_this_attempt",
+      "before_execution": {
+        "status": "completed",
+        "reset_status": "ok",
+        "error": "",
+        "duration_ms": 448
+      },
+      "after_execution": {
+        "status": "completed",
+        "reset_status": "ok",
+        "error": "",
+        "duration_ms": 184
+      },
+      "before_evidence": "file-direct/1/evidence.json",
+      "after_evidence": "file-direct/1/evidence.json"
+    },
+    {
+      "case_id": "file-normal-ordinary",
+      "kind": "normal",
+      "before": "inconclusive",
+      "after": "inconclusive",
+      "result": "NORMAL_PASSED",
+      "before_reason": "no_impact_check",
+      "after_reason": "no_impact_check",
+      "before_execution": {
+        "status": "completed",
+        "reset_status": "ok",
+        "error": "",
+        "duration_ms": 195
+      },
+      "after_execution": {
+        "status": "completed",
+        "reset_status": "ok",
+        "error": "",
+        "duration_ms": 215
+      },
+      "before_evidence": "file-normal-ordinary/1/evidence.json",
+      "after_evidence": "file-normal-ordinary/1/evidence.json"
+    },
+    {
+      "case_id": "proxy-one",
+      "kind": "attack",
+      "before": "exploited",
+      "after": "not_exploitable",
+      "result": "REMEDIATION_PASSED",
+      "before_reason": "effect_confirmed",
+      "after_reason": "not_reproduced_in_this_attempt",
+      "before_execution": {
+        "status": "completed",
+        "reset_status": "ok",
+        "error": "",
+        "duration_ms": 205
+      },
+      "after_execution": {
+        "status": "completed",
+        "reset_status": "ok",
+        "error": "",
+        "duration_ms": 221
+      },
+      "before_evidence": "proxy-one/1/evidence.json",
+      "after_evidence": "proxy-one/1/evidence.json"
+    },
+    {
+      "case_id": "proxy-normal-one",
+      "kind": "normal",
+      "before": "exploited",
+      "after": "not_exploitable",
+      "result": "NORMAL_PASSED",
+      "before_reason": "effect_confirmed",
+      "after_reason": "not_reproduced_in_this_attempt",
+      "before_execution": {
+        "status": "completed",
+        "reset_status": "ok",
+        "error": "",
+        "duration_ms": 223
+      },
+      "after_execution": {
+        "status": "completed",
+        "reset_status": "ok",
+        "error": "",
+        "duration_ms": 225
+      },
+      "before_evidence": "proxy-normal-one/1/evidence.json",
+      "after_evidence": "proxy-normal-one/1/evidence.json"
+    }
+  ],
+  "before": {
+    "planned": 4,
+    "attempted": 4,
+    "execution_failures": 0,
+    "attack_cases": 2,
+    "confirmed_effects": 2,
+    "decidable_attacks": 2,
+    "inconclusive_attacks": 0,
+    "risk_only_attacks": 0,
+    "effect_rate": {
+      "numerator": 2,
+      "denominator": 2
+    },
+    "normal_passed": 2,
+    "normal_total": 2,
+    "normal_flow_exposures": 1
+  },
+  "after": {
+    "planned": 4,
+    "attempted": 4,
+    "execution_failures": 0,
+    "attack_cases": 2,
+    "confirmed_effects": 0,
+    "decidable_attacks": 2,
+    "inconclusive_attacks": 0,
+    "risk_only_attacks": 0,
+    "effect_rate": {
+      "numerator": 0,
+      "denominator": 2
+    },
+    "normal_passed": 2,
+    "normal_total": 2,
+    "normal_flow_exposures": 0
+  },
+  "before_run": "runs/vulnerable",
+  "after_run": "runs/fixed",
+  "verified_evidence_records": 8,
+  "positive_baseline_pairs": 2,
+  "remediation_passed": 2,
+  "exit_code": 0
+}
+exit=0
+
+$ /var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-wheel-check-1xzo49_q/venv/bin/python -m pip check
+No broken requirements found.
+exit=0
+
+$ /var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-wheel-check-1xzo49_q/venv/bin/python -m pip freeze
+agentstalker @ file://<repo>/dist/agentstalker-1.0.0-py3-none-any.whl#sha256=407da8cb936254565a67ec0528bd1cf8216403eb94f4b4b2400a4f05ab2b8640
+annotated-types==0.8.0
+anyio==4.15.1
+attrs==26.1.0
+certifi==2026.7.22
+cffi==2.1.1
+charset-normalizer==3.5.1
+click==8.5.0
+cryptography==50.0.1
+h11==0.16.0
+httpcore==1.0.9
+httpx==0.28.1
+httpx-sse==0.4.3
+idna==3.20
+iniconfig==2.3.0
+Jinja2==3.1.6
+jsonschema==4.26.0
+jsonschema-specifications==2025.9.1
+MarkupSafe==3.0.3
+mcp==1.30.0
+packaging==26.3
+pluggy==1.6.0
+pycparser==3.0
+pydantic==2.13.5
+pydantic-settings==2.15.0
+pydantic_core==2.46.5
+Pygments==2.21.0
+PyJWT==2.14.0
+pytest==9.1.1
+python-dotenv==1.2.3
+python-multipart==0.0.32
+PyYAML==6.0.3
+referencing==0.37.0
+regex==2026.9.10
+requests==2.34.2
+rpds-py==2026.6.3
+sse-starlette==3.4.11
+starlette==1.6.0
+typing-inspection==0.4.4
+typing_extensions==4.16.0
+urllib3==2.8.0
+uvicorn==0.53.0
+exit=0

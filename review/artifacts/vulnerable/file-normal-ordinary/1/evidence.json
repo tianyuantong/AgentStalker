@@ -1,0 +1,112 @@
+{
+  "evidence_id": "",
+  "timestamp": 0.0,
+  "test_case_id": "file-normal-ordinary",
+  "title": "file-normal-ordinary",
+  "severity": "medium",
+  "layers": [],
+  "events": [
+    {
+      "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+      "case_id": "file-normal-ordinary",
+      "attempt_id": "1",
+      "session_id": "7323c05b2bc84725ad6cbbc74ecf13d4",
+      "event_id": "tool-response",
+      "source": "response",
+      "layer": "mcp",
+      "data": {
+        "text": "public-content",
+        "rpc": {
+          "jsonrpc": "2.0",
+          "id": 101,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "public-content"
+              }
+            ],
+            "structuredContent": {
+              "result": "public-content"
+            },
+            "isError": false
+          }
+        },
+        "tool": "read_file",
+        "arguments": {
+          "path": "/var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-case-owavbaeb/allowed/ordinary.txt"
+        }
+      }
+    }
+  ],
+  "related_owasp": [],
+  "exploit_chain": [],
+  "raw_evidence_files": [],
+  "trace_id": "",
+  "user_id": "",
+  "agent_id": "",
+  "session_id": "",
+  "description": "",
+  "impact": "",
+  "remediation": "",
+  "verdict": "inconclusive",
+  "confidence": 0.0,
+  "metadata": {
+    "case_kind": "normal",
+    "group": "file",
+    "case_template_hash": "49980383051c1ebaa9791e08763f0a7729cd1abf31d1704f3653bb9910911a6e",
+    "association": "isolated_process_and_receiver",
+    "confidence_kind": "heuristic_not_probability",
+    "matched_rules": [],
+    "rule_errors": [],
+    "reason_code": "no_impact_check",
+    "missing_evidence": [
+      "impact_check"
+    ]
+  },
+  "schema_version": 2,
+  "context": {
+    "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+    "case_id": "file-normal-ordinary",
+    "attempt_id": "1",
+    "session_id": "7323c05b2bc84725ad6cbbc74ecf13d4"
+  },
+  "execution": {
+    "status": "completed",
+    "reset_status": "ok",
+    "error": "",
+    "duration_ms": 234
+  },
+  "collection": {
+    "response": {
+      "status": "ok",
+      "window_complete": true,
+      "method": "matching MCP JSON-RPC response",
+      "error": ""
+    }
+  },
+  "required_sources": [
+    "response"
+  ],
+  "boundary": "file: allowed/ only; proxy: public endpoints only, never forward caller credentials",
+  "checks": [
+    {
+      "id": "normal",
+      "kind": "normal",
+      "type": "text_equals",
+      "source": "response",
+      "expected": "public-content"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "normal",
+      "kind": "normal",
+      "status": "pass",
+      "evidence_refs": [
+        "tool-response"
+      ],
+      "reason": "recorded result checked"
+    }
+  ]
+}

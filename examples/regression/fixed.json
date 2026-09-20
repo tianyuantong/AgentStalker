@@ -1,0 +1,13 @@
+{
+  "type": "mcp-regression",
+  "timeout_seconds": 10,
+  "model": null,
+  "permissions": "file: allowed/ only; proxy: public endpoints only, never forward caller credentials",
+  "initial_state": "fresh isolated test tree and receiver per case",
+  "variant": "fixed",
+  "remediation": {
+    "from_variant": "vulnerable",
+    "to_variant": "fixed",
+    "description": "Enforce resolved workspace paths; restrict target paths and strip synthetic Authorization."
+  }
+}

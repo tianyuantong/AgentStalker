@@ -1,0 +1,95 @@
+{
+  "evidence_id": "",
+  "timestamp": 0.0,
+  "test_case_id": "file-parent",
+  "title": "file-parent",
+  "severity": "medium",
+  "layers": [],
+  "events": [
+    {
+      "run_id": "9e9c1ad90cb84922bf046ab9395a4394",
+      "case_id": "file-parent",
+      "attempt_id": "1",
+      "session_id": "4eef02ca325640a488e8d21b1818855a",
+      "event_id": "tool-response",
+      "source": "response",
+      "layer": "mcp",
+      "data": {
+        "text": "DENIED: outside allowed workspace",
+        "rpc": {
+          "jsonrpc": "2.0",
+          "id": 101,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "DENIED: outside allowed workspace"
+              }
+            ],
+            "structuredContent": {
+              "result": "DENIED: outside allowed workspace"
+            },
+            "isError": false
+          }
+        },
+        "tool": "read_file",
+        "arguments": {
+          "path": "/var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-case-_ksk3_vb/allowed/../allowed-sibling/secret.txt"
+        }
+      }
+    }
+  ],
+  "related_owasp": [],
+  "exploit_chain": [],
+  "raw_evidence_files": [],
+  "trace_id": "",
+  "user_id": "",
+  "agent_id": "",
+  "session_id": "",
+  "description": "",
+  "impact": "",
+  "remediation": "",
+  "verdict": "inconclusive",
+  "confidence": 0.0,
+  "metadata": {
+    "case_kind": "attack",
+    "group": "file",
+    "case_template_hash": "bed6deb7e571ab4ab4e530d5a576d63e0caf90ab0711f5b2e88ff20013d6ef84",
+    "association": "isolated_process_and_receiver"
+  },
+  "schema_version": 2,
+  "context": {
+    "run_id": "9e9c1ad90cb84922bf046ab9395a4394",
+    "case_id": "file-parent",
+    "attempt_id": "1",
+    "session_id": "4eef02ca325640a488e8d21b1818855a"
+  },
+  "execution": {
+    "status": "completed",
+    "reset_status": "ok",
+    "error": "",
+    "duration_ms": 230
+  },
+  "collection": {
+    "response": {
+      "status": "ok",
+      "window_complete": true,
+      "method": "matching MCP JSON-RPC response",
+      "error": ""
+    }
+  },
+  "required_sources": [
+    "response"
+  ],
+  "boundary": "file: allowed/ only; proxy: public endpoints only, never forward caller credentials",
+  "checks": [
+    {
+      "id": "impact",
+      "kind": "impact",
+      "type": "protected_marker_returned",
+      "source": "response",
+      "expected": "protected-d77c53824691482886d1922e379b4f9d"
+    }
+  ],
+  "assertions": []
+}

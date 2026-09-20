@@ -1,0 +1,3 @@
+# Preserve original pytest failure transcripts verbatim, including whitespace.
+review/baseline-tests.txt -whitespace
+review/baseline-tests.xml -whitespace

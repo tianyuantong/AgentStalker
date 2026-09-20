@@ -27,3 +27,11 @@ evidence/
 .zcode/
 .DS_Store
 Thumbs.db
+
+# Build and local review environments
+build/
+dist/
+.venv-*/
+
+# PR text lives next to the branch, not in the tree
+review/PR_*

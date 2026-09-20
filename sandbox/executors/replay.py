@@ -1,80 +1,58 @@
-"""Conversation Replay Executor — 多轮对话回放器
-
-加载预先设计的多轮对话剧本,按顺序注入。支持中途插入污染数据(间接注入)。
-
-历史:原在 _other_executors.py。Commit 4 拆出独立模块。
-修 C2:原版 __init__ 调用 APIExecutor(base_url=...) 但只 import 了
-ExecutionResult(没 import APIExecutor),实例化时 NameError。
-"""
+"""Scripted conversation execution. Offline rejudging lives in correlation."""
 from __future__ import annotations
 
 import time
+import uuid
 
-from .api_executor import APIExecutor, ExecutionResult
+from .api_executor import APIExecutor, ExecutionResult, ExecutionContext
+from sandbox.assertions import response_assertions
 
 
 class ConversationReplayExecutor:
-    """多轮对话回放器
+    def __init__(self, base_url="http://127.0.0.1:8000", **kwargs):
+        self.api_executor = APIExecutor(base_url=base_url, **kwargs)
+        self.indirect_injectors = {}
 
-    加载预先设计的多轮对话剧本，按顺序注入。
-    支持中途插入污染数据（间接注入）。
-    """
-
-    def __init__(self, base_url: str = "http://127.0.0.1:8000"):
-        # C2 修复:APIExecutor 现在正确 import(原版漏 import 导致 NameError)
-        self.api_executor = APIExecutor(base_url=base_url)
-        self.indirect_injectors: dict = {}
-
-    def add_indirect_injector(self, target: str, callback):
-        """注册间接注入器
-
-        Args:
-            target: 'rag' | 'mcp' | 'memory' | 'web_search'
-            callback: 注入函数 (payload) -> bool
-        """
+    def add_indirect_injector(self, target, callback):
         self.indirect_injectors[target] = callback
 
-    def execute(self, test_case: dict) -> ExecutionResult:
-        """执行多轮剧本"""
-        start = time.time()
-        turns = test_case.get("turns", [])
+    def _inject(self, injections):
+        for inject in injections:
+            callback = self.indirect_injectors.get(inject["target"])
+            if callback is None or callback(inject.get("payload", "")) is not True:
+                raise ValueError(f"injection prerequisite failed: {inject['target']}")
 
+    def execute(self, test_case: dict, context: ExecutionContext | None = None) -> ExecutionResult:
+        started = time.monotonic()
+        ctx = context or ExecutionContext(uuid.uuid4().hex)
         history = []
-        for i, turn in enumerate(turns):
-            # 间接注入（如果 turn 配置了）
-            for inject in turn.get("inject_before", []):
-                target = inject.get("target")
-                payload = inject.get("payload", "")
-                if target in self.indirect_injectors:
-                    self.indirect_injectors[target](payload)
+        turns = test_case.get("turns", [])
+        if not turns:
+            return ExecutionResult(False, status="not_run", error="empty conversation")
+        try:
+            for i, turn in enumerate(turns):
+                self._inject(turn.get("inject_before", []))
+                r = self.api_executor.execute({"payload": {"message": turn.get("message", "")},
+                                                "assertions": turn.get("assertions", [])}, context=ctx)
+                history.append({"turn": i + 1, "agent_response": r.output, "status": r.status})
+                if not r.success or any(a["status"] != "pass" for a in r.assertions):
+                    return ExecutionResult(False, output={"history": history}, status=r.status if not r.success else "error",
+                                           error=r.error or "turn prerequisite failed", assertions=r.assertions,
+                                           conversation_id=ctx.session_id, trace_id=ctx.session_id)
+                self._inject(turn.get("inject_after", []))
+            checks = test_case.get("final_assertion", test_case.get("assertions", []))
+            if isinstance(checks, dict):
+                checks = [checks]
+            if not isinstance(checks, list):
+                raise ValueError("final_assertion must be structured checks, not an expression")
+            results = response_assertions(checks, r.output, r.side_effects.get("response_status", 200))
+            return ExecutionResult(True, output={"history": history}, status="completed",
+                                   assertions=results, conversation_id=ctx.session_id, trace_id=ctx.session_id,
+                                   duration_ms=int((time.monotonic() - started) * 1000),
+                                   side_effects={"exploitable": False})
+        except Exception as exc:
+            return ExecutionResult(False, output={"history": history}, status="error", error=str(exc),
+                                   conversation_id=ctx.session_id, trace_id=ctx.session_id)
 
-            # 用户消息
-            msg = turn.get("message", "")
-            r = self.api_executor.execute({
-                "method": "POST",
-                "endpoint": "/chat",
-                "payload": {"message": msg},
-            })
-            history.append({"turn": i + 1, "user": msg, "agent_response": r.output})
-
-            # 间接注入后置（用于下一轮）
-            for inject in turn.get("inject_after", []):
-                target = inject.get("target")
-                payload = inject.get("payload", "")
-                if target in self.indirect_injectors:
-                    self.indirect_injectors[target](payload)
-
-            time.sleep(0.5)
-
-        # 最终断言
-        exploitable = False
-        if test_case.get("final_assertion"):
-            # 检查 history
-            pass
-
-        return ExecutionResult(
-            success=True,
-            output={"history": history},
-            duration_ms=int((time.time() - start) * 1000),
-            side_effects={"exploitable": exploitable},
-        )
+    def teardown(self):
+        self.api_executor.teardown()

@@ -1,0 +1,17 @@
+{
+  "planned": 12,
+  "attempted": 12,
+  "execution_failures": 0,
+  "attack_cases": 6,
+  "confirmed_effects": 0,
+  "decidable_attacks": 6,
+  "inconclusive_attacks": 0,
+  "risk_only_attacks": 0,
+  "effect_rate": {
+    "numerator": 0,
+    "denominator": 6
+  },
+  "normal_passed": 6,
+  "normal_total": 6,
+  "normal_flow_exposures": 0
+}

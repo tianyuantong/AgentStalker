@@ -93,7 +93,7 @@ class MCPMonitor:
                         server_name=server_name,
                         tool_name=tname,
                         evidence=f"runtime tool '{tname}' shadows local tool",
-                        verdict="malicious",
+                        verdict="suspicious",
                     ))
 
             # 3. 描述投毒检测(复用静态层正则,保证一致性)
@@ -129,8 +129,10 @@ class MCPMonitor:
                                 payload_preview=resp_text[:200],
                                 verdict="suspicious",
                             ))
-                    except Exception:
-                        pass  # 工具可能要求必填参数,空参失败是正常的
+                    except Exception as exc:
+                        events.append(MCPEvent(timestamp=time.time(), event_type="probe_error",
+                                               server_name=server_name, tool_name=tname,
+                                               evidence=f"{type(exc).__name__}: {exc}", verdict="unknown"))
 
         finally:
             executor.teardown()

@@ -4,7 +4,7 @@ These drive the real testbeds/mcp_mini_server fixture (a FastMCP server with
 squatting/poisoned/passthrough tools) and verify the full chain:
 MCPMonitor.inspect_server -> MCPEvent -> EvidenceBuilder -> VerdictEngine.
 
-Requires the mcp + fastmcp packages; skipped if unavailable.
+Requires the MCP v1 SDK; skipped if unavailable.
 """
 import sys
 from pathlib import Path
@@ -12,7 +12,6 @@ from pathlib import Path
 import pytest
 
 pytest.importorskip("mcp")
-pytest.importorskip("fastmcp")
 
 from sandbox.monitoring.mcp_monitor import MCPMonitor, MCPEvent
 from sandbox.correlation import EvidenceBuilder, VerdictEngine, Evidence, Verdict
@@ -52,7 +51,7 @@ def test_mcp_monitor_finds_squatting():
     squat = [e for e in events if e.event_type == "tool_squatting"]
     assert squat, f"no squatting event; got {[e.event_type for e in events]}"
     assert any(e.tool_name == "read_file" for e in squat)
-    assert all(e.layer == "mcp" and e.verdict == "malicious" for e in squat)
+    assert all(e.layer == "mcp" and e.verdict == "suspicious" for e in squat)
 
 
 def test_mcp_monitor_finds_description_poisoning():
@@ -71,7 +70,7 @@ def test_no_squatting_when_no_local_conflict():
 
 
 def test_verdict_engine_r009_squatting():
-    """R009: a tool_squatting MCP event -> EXPLOITED at 0.90 confidence."""
+    """Legacy tool-name collision is a recorded signal, not proof of exploitation."""
     mon = MCPMonitor()
     # Manually construct the event (don't need a live server for the verdict test)
     event = MCPEvent(
@@ -88,13 +87,15 @@ def test_verdict_engine_r009_squatting():
     )
     engine = VerdictEngine()
     engine.judge(ev)
-    assert ev.verdict == Verdict.EXPLOITED.value, f"expected exploited, got {ev.verdict}"
-    assert ev.confidence == 0.90
-    assert ev.metadata.get("matched_rule") == "R009"
+    assert ev.verdict == Verdict.INCONCLUSIVE.value  # legacy event has no execution coverage
+    assert ev.metadata["reason_code"] == "legacy_unverified"
+    assert ev.metadata["matched_rules"] == ["R009"]
+    assert ev.metadata["matched_rule"] == "R009"
+
 
 
 def test_verdict_engine_r010_description_poisoning():
-    """R010: a description_poisoning event -> LIKELY_EXPLOITABLE at 0.80."""
+    """Legacy description event is a recorded signal without execution coverage."""
     from sandbox.correlation import EvidenceBuilder, VerdictEngine, Verdict
     event = MCPEvent(
         timestamp=0,
@@ -109,13 +110,13 @@ def test_verdict_engine_r010_description_poisoning():
         mcp_events=[event],
     )
     VerdictEngine().judge(ev)
-    assert ev.verdict == Verdict.LIKELY_EXPLOITABLE.value
-    assert ev.confidence == 0.80
-    assert ev.metadata.get("matched_rule") == "R010"
+    assert ev.verdict == Verdict.INCONCLUSIVE.value
+    assert ev.metadata["reason_code"] == "legacy_unverified"
+    assert ev.metadata["matched_rules"] == ["R010"]
 
 
 def test_verdict_engine_r011_token_passthrough():
-    """R011: a token_passthrough event -> LIKELY_EXPLOITABLE at 0.85."""
+    """Legacy token event is a recorded signal without independent effect confirmation."""
     event = MCPEvent(
         timestamp=0,
         event_type="token_passthrough",
@@ -129,9 +130,9 @@ def test_verdict_engine_r011_token_passthrough():
         mcp_events=[event],
     )
     VerdictEngine().judge(ev)
-    assert ev.verdict == Verdict.LIKELY_EXPLOITABLE.value
-    assert ev.confidence == 0.85
-    assert ev.metadata.get("matched_rule") == "R011"
+    assert ev.verdict == Verdict.INCONCLUSIVE.value
+    assert ev.metadata["reason_code"] == "legacy_unverified"
+    assert ev.metadata["matched_rules"] == ["R011"]
 
 
 def test_evidence_builder_accepts_mcp_events():

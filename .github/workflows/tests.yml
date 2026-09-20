@@ -1,0 +1,31 @@
+name: evidence-regression
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false  # report every Python version, do not cancel siblings
+      matrix:
+        python: ['3.11', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m pip install -e '.[test]' build
+      - run: python -m pytest tests -q -ra --junitxml=results.xml
+      - run: python -m build --wheel
+      - name: Verify installed wheel outside checkout
+        shell: bash
+        run: |
+          python -m venv /tmp/ast-wheel
+          /tmp/ast-wheel/bin/pip install dist/*.whl
+          cd /tmp
+          /tmp/ast-wheel/bin/python -c 'from sandbox.correlation import VerdictEngine; from sandbox.regression import fingerprints; from sandbox.executors import MCPExecutor; print(fingerprints())'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tests-${{ matrix.python }}
+          path: results.xml

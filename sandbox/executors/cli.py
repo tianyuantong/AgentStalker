@@ -49,10 +49,12 @@ class CLIExecutor:
                 output={"stdout": result.stdout, "stderr": result.stderr, "returncode": result.returncode},
                 error=result.stderr if result.returncode != 0 else "",
                 duration_ms=duration,
+                status="completed" if result.returncode == 0 else "error",
             )
         except Exception as e:
             return ExecutionResult(
                 success=False,
                 error=f"{e}\n{traceback.format_exc()}",
                 duration_ms=int((time.time() - start) * 1000),
+                status="timeout" if isinstance(e, subprocess.TimeoutExpired) else "error",
             )

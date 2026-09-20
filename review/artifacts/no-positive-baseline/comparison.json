@@ -1,0 +1,322 @@
+{
+  "status": "COMPARABLE",
+  "differences": [],
+  "rows": [
+    {
+      "case_id": "file-direct",
+      "kind": "attack",
+      "before": "not_exploitable",
+      "after": "not_exploitable",
+      "result": "NO_POSITIVE_BASELINE",
+      "before_reason": "not_reproduced_in_this_attempt",
+      "after_reason": "not_reproduced_in_this_attempt",
+      "before_execution": {
+        "status": "completed",
+        "reset_status": "ok",
+        "error": "",
+        "duration_ms": 198
+      },
+      "after_execution": {
+        "status": "completed",
+        "reset_status": "ok",
+        "error": "",
+        "duration_ms": 198
+      },
+      "before_evidence": "file-direct/1/evidence.json",
+      "after_evidence": "file-direct/1/evidence.json"
+    },
+    {
+      "case_id": "file-parent",
+      "kind": "attack",
+      "before": "not_exploitable",
+      "after": "not_exploitable",
+      "result": "NO_POSITIVE_BASELINE",
+      "before_reason": "not_reproduced_in_this_attempt",
+      "after_reason": "not_reproduced_in_this_attempt",
+      "before_execution": {
+        "status": "completed",
+        "reset_status": "ok",
+        "error": "",
+        "duration_ms": 230
+      },
+      "after_execution": {
+        "status": "completed",
+        "reset_status": "ok",
+        "error": "",
+        "duration_ms": 230
+      },
+      "before_evidence": "file-parent/1/evidence.json",
+      "after_evidence": "file-parent/1/evidence.json"
+    },
+    {
+      "case_id": "file-symlink",
+      "kind": "attack",
+      "before": "not_exploitable",
+      "after": "not_exploitable",
+      "result": "NO_POSITIVE_BASELINE",
+      "before_reason": "not_reproduced_in_this_attempt",
+      "after_reason": "not_reproduced_in_this_attempt",
+      "before_execution": {
+        "status": "completed",
+        "reset_status": "ok",
+        "error": "",
+        "duration_ms": 236
+      },
+      "after_execution": {
+        "status": "completed",
+        "reset_status": "ok",
+        "error": "",
+        "duration_ms": 236
+      },
+      "before_evidence": "file-symlink/1/evidence.json",
+      "after_evidence": "file-symlink/1/evidence.json"
+    },
+    {
+      "case_id": "file-normal-ordinary",
+      "kind": "normal",
+      "before": "inconclusive",
+      "after": "inconclusive",
+      "result": "NORMAL_PASSED",
+      "before_reason": "no_impact_check",
+      "after_reason": "no_impact_check",
+      "before_execution": {
+        "status": "completed",
+        "reset_status": "ok",
+        "error": "",
+        "duration_ms": 233
+      },
+      "after_execution": {
+        "status": "completed",
+        "reset_status": "ok",
+        "error": "",
+        "duration_ms": 233
+      },
+      "before_evidence": "file-normal-ordinary/1/evidence.json",
+      "after_evidence": "file-normal-ordinary/1/evidence.json"
+    },
+    {
+      "case_id": "file-normal-sibling-name",
+      "kind": "normal",
+      "before": "inconclusive",
+      "after": "inconclusive",
+      "result": "NORMAL_PASSED",
+      "before_reason": "no_impact_check",
+      "after_reason": "no_impact_check",
+      "before_execution": {
+        "status": "completed",
+        "reset_status": "ok",
+        "error": "",
+        "duration_ms": 266
+      },
+      "after_execution": {
+        "status": "completed",
+        "reset_status": "ok",
+        "error": "",
+        "duration_ms": 266
+      },
+      "before_evidence": "file-normal-sibling-name/1/evidence.json",
+      "after_evidence": "file-normal-sibling-name/1/evidence.json"
+    },
+    {
+      "case_id": "file-normal-nested",
+      "kind": "normal",
+      "before": "inconclusive",
+      "after": "inconclusive",
+      "result": "NORMAL_PASSED",
+      "before_reason": "no_impact_check",
+      "after_reason": "no_impact_check",
+      "before_execution": {
+        "status": "completed",
+        "reset_status": "ok",
+        "error": "",
+        "duration_ms": 227
+      },
+      "after_execution": {
+        "status": "completed",
+        "reset_status": "ok",
+        "error": "",
+        "duration_ms": 227
+      },
+      "before_evidence": "file-normal-nested/1/evidence.json",
+      "after_evidence": "file-normal-nested/1/evidence.json"
+    },
+    {
+      "case_id": "proxy-one",
+      "kind": "attack",
+      "before": "not_exploitable",
+      "after": "not_exploitable",
+      "result": "NO_POSITIVE_BASELINE",
+      "before_reason": "not_reproduced_in_this_attempt",
+      "after_reason": "not_reproduced_in_this_attempt",
+      "before_execution": {
+        "status": "completed",
+        "reset_status": "ok",
+        "error": "",
+        "duration_ms": 309
+      },
+      "after_execution": {
+        "status": "completed",
+        "reset_status": "ok",
+        "error": "",
+        "duration_ms": 309
+      },
+      "before_evidence": "proxy-one/1/evidence.json",
+      "after_evidence": "proxy-one/1/evidence.json"
+    },
+    {
+      "case_id": "proxy-two",
+      "kind": "attack",
+      "before": "not_exploitable",
+      "after": "not_exploitable",
+      "result": "NO_POSITIVE_BASELINE",
+      "before_reason": "not_reproduced_in_this_attempt",
+      "after_reason": "not_reproduced_in_this_attempt",
+      "before_execution": {
+        "status": "completed",
+        "reset_status": "ok",
+        "error": "",
+        "duration_ms": 228
+      },
+      "after_execution": {
+        "status": "completed",
+        "reset_status": "ok",
+        "error": "",
+        "duration_ms": 228
+      },
+      "before_evidence": "proxy-two/1/evidence.json",
+      "after_evidence": "proxy-two/1/evidence.json"
+    },
+    {
+      "case_id": "proxy-three",
+      "kind": "attack",
+      "before": "not_exploitable",
+      "after": "not_exploitable",
+      "result": "NO_POSITIVE_BASELINE",
+      "before_reason": "not_reproduced_in_this_attempt",
+      "after_reason": "not_reproduced_in_this_attempt",
+      "before_execution": {
+        "status": "completed",
+        "reset_status": "ok",
+        "error": "",
+        "duration_ms": 246
+      },
+      "after_execution": {
+        "status": "completed",
+        "reset_status": "ok",
+        "error": "",
+        "duration_ms": 246
+      },
+      "before_evidence": "proxy-three/1/evidence.json",
+      "after_evidence": "proxy-three/1/evidence.json"
+    },
+    {
+      "case_id": "proxy-normal-one",
+      "kind": "normal",
+      "before": "not_exploitable",
+      "after": "not_exploitable",
+      "result": "NORMAL_PASSED",
+      "before_reason": "not_reproduced_in_this_attempt",
+      "after_reason": "not_reproduced_in_this_attempt",
+      "before_execution": {
+        "status": "completed",
+        "reset_status": "ok",
+        "error": "",
+        "duration_ms": 257
+      },
+      "after_execution": {
+        "status": "completed",
+        "reset_status": "ok",
+        "error": "",
+        "duration_ms": 257
+      },
+      "before_evidence": "proxy-normal-one/1/evidence.json",
+      "after_evidence": "proxy-normal-one/1/evidence.json"
+    },
+    {
+      "case_id": "proxy-normal-two",
+      "kind": "normal",
+      "before": "not_exploitable",
+      "after": "not_exploitable",
+      "result": "NORMAL_PASSED",
+      "before_reason": "not_reproduced_in_this_attempt",
+      "after_reason": "not_reproduced_in_this_attempt",
+      "before_execution": {
+        "status": "completed",
+        "reset_status": "ok",
+        "error": "",
+        "duration_ms": 256
+      },
+      "after_execution": {
+        "status": "completed",
+        "reset_status": "ok",
+        "error": "",
+        "duration_ms": 256
+      },
+      "before_evidence": "proxy-normal-two/1/evidence.json",
+      "after_evidence": "proxy-normal-two/1/evidence.json"
+    },
+    {
+      "case_id": "proxy-normal-three",
+      "kind": "normal",
+      "before": "not_exploitable",
+      "after": "not_exploitable",
+      "result": "NORMAL_PASSED",
+      "before_reason": "not_reproduced_in_this_attempt",
+      "after_reason": "not_reproduced_in_this_attempt",
+      "before_execution": {
+        "status": "completed",
+        "reset_status": "ok",
+        "error": "",
+        "duration_ms": 303
+      },
+      "after_execution": {
+        "status": "completed",
+        "reset_status": "ok",
+        "error": "",
+        "duration_ms": 303
+      },
+      "before_evidence": "proxy-normal-three/1/evidence.json",
+      "after_evidence": "proxy-normal-three/1/evidence.json"
+    }
+  ],
+  "before": {
+    "planned": 12,
+    "attempted": 12,
+    "execution_failures": 0,
+    "attack_cases": 6,
+    "confirmed_effects": 0,
+    "decidable_attacks": 6,
+    "inconclusive_attacks": 0,
+    "risk_only_attacks": 0,
+    "effect_rate": {
+      "numerator": 0,
+      "denominator": 6
+    },
+    "normal_passed": 6,
+    "normal_total": 6,
+    "normal_flow_exposures": 0
+  },
+  "after": {
+    "planned": 12,
+    "attempted": 12,
+    "execution_failures": 0,
+    "attack_cases": 6,
+    "confirmed_effects": 0,
+    "decidable_attacks": 6,
+    "inconclusive_attacks": 0,
+    "risk_only_attacks": 0,
+    "effect_rate": {
+      "numerator": 0,
+      "denominator": 6
+    },
+    "normal_passed": 6,
+    "normal_total": 6,
+    "normal_flow_exposures": 0
+  },
+  "before_run": "fixed",
+  "after_run": "fixed",
+  "verified_evidence_records": 24,
+  "positive_baseline_pairs": 0,
+  "remediation_passed": 0,
+  "exit_code": 2
+}

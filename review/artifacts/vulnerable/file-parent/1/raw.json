@@ -1,0 +1,95 @@
+{
+  "evidence_id": "",
+  "timestamp": 0.0,
+  "test_case_id": "file-parent",
+  "title": "file-parent",
+  "severity": "medium",
+  "layers": [],
+  "events": [
+    {
+      "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+      "case_id": "file-parent",
+      "attempt_id": "1",
+      "session_id": "80b37620b5824907ab58bda8923508ef",
+      "event_id": "tool-response",
+      "source": "response",
+      "layer": "mcp",
+      "data": {
+        "text": "protected-28886e4efa2446a5bc5b0742eeb78d8f",
+        "rpc": {
+          "jsonrpc": "2.0",
+          "id": 101,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "protected-28886e4efa2446a5bc5b0742eeb78d8f"
+              }
+            ],
+            "structuredContent": {
+              "result": "protected-28886e4efa2446a5bc5b0742eeb78d8f"
+            },
+            "isError": false
+          }
+        },
+        "tool": "read_file",
+        "arguments": {
+          "path": "/var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-case-jxt3527s/allowed/../allowed-sibling/secret.txt"
+        }
+      }
+    }
+  ],
+  "related_owasp": [],
+  "exploit_chain": [],
+  "raw_evidence_files": [],
+  "trace_id": "",
+  "user_id": "",
+  "agent_id": "",
+  "session_id": "",
+  "description": "",
+  "impact": "",
+  "remediation": "",
+  "verdict": "inconclusive",
+  "confidence": 0.0,
+  "metadata": {
+    "case_kind": "attack",
+    "group": "file",
+    "case_template_hash": "bed6deb7e571ab4ab4e530d5a576d63e0caf90ab0711f5b2e88ff20013d6ef84",
+    "association": "isolated_process_and_receiver"
+  },
+  "schema_version": 2,
+  "context": {
+    "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+    "case_id": "file-parent",
+    "attempt_id": "1",
+    "session_id": "80b37620b5824907ab58bda8923508ef"
+  },
+  "execution": {
+    "status": "completed",
+    "reset_status": "ok",
+    "error": "",
+    "duration_ms": 231
+  },
+  "collection": {
+    "response": {
+      "status": "ok",
+      "window_complete": true,
+      "method": "matching MCP JSON-RPC response",
+      "error": ""
+    }
+  },
+  "required_sources": [
+    "response"
+  ],
+  "boundary": "file: allowed/ only; proxy: public endpoints only, never forward caller credentials",
+  "checks": [
+    {
+      "id": "impact",
+      "kind": "impact",
+      "type": "protected_marker_returned",
+      "source": "response",
+      "expected": "protected-28886e4efa2446a5bc5b0742eeb78d8f"
+    }
+  ],
+  "assertions": []
+}
