@@ -1,0 +1,151 @@
+{
+  "evidence_id": "",
+  "timestamp": 0.0,
+  "test_case_id": "proxy-normal-three",
+  "title": "proxy-normal-three",
+  "severity": "medium",
+  "layers": [],
+  "events": [
+    {
+      "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+      "case_id": "proxy-normal-three",
+      "attempt_id": "1",
+      "session_id": "d7a41aaaff044a14958a9b90f8d429b6",
+      "event_id": "tool-response",
+      "source": "response",
+      "layer": "mcp",
+      "data": {
+        "text": "public-content",
+        "rpc": {
+          "jsonrpc": "2.0",
+          "id": 101,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "public-content"
+              }
+            ],
+            "structuredContent": {
+              "result": "public-content"
+            },
+            "isError": false
+          }
+        },
+        "tool": "proxy_request",
+        "arguments": {
+          "url": "http://127.0.0.1:53484/public/d7a41aaaff044a14958a9b90f8d429b6"
+        }
+      }
+    },
+    {
+      "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+      "case_id": "proxy-normal-three",
+      "attempt_id": "1",
+      "session_id": "d7a41aaaff044a14958a9b90f8d429b6",
+      "event_id": "receiver-snapshot",
+      "source": "receiver",
+      "data": {
+        "requests": [
+          {
+            "path": "/public/d7a41aaaff044a14958a9b90f8d429b6",
+            "authorization": "synthetic-d4d17535cc4748a48d9ad74a5f65e5c8"
+          }
+        ]
+      }
+    }
+  ],
+  "related_owasp": [],
+  "exploit_chain": [],
+  "raw_evidence_files": [],
+  "trace_id": "",
+  "user_id": "",
+  "agent_id": "",
+  "session_id": "",
+  "description": "",
+  "impact": "",
+  "remediation": "",
+  "verdict": "exploited",
+  "confidence": 1.0,
+  "metadata": {
+    "case_kind": "normal",
+    "group": "proxy",
+    "case_template_hash": "de6fe2d36211539836baf0c673073d7eab499dc1a8b16ffbcb80aabab36a6e9e",
+    "association": "isolated_process_and_receiver",
+    "confidence_kind": "heuristic_not_probability",
+    "matched_rules": [],
+    "rule_errors": [],
+    "reason_code": "effect_confirmed",
+    "supporting_evidence": [
+      "receiver-snapshot"
+    ],
+    "missing_evidence": []
+  },
+  "schema_version": 2,
+  "context": {
+    "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+    "case_id": "proxy-normal-three",
+    "attempt_id": "1",
+    "session_id": "d7a41aaaff044a14958a9b90f8d429b6"
+  },
+  "execution": {
+    "status": "completed",
+    "reset_status": "ok",
+    "error": "",
+    "duration_ms": 246
+  },
+  "collection": {
+    "response": {
+      "status": "ok",
+      "window_complete": true,
+      "method": "matching MCP JSON-RPC response",
+      "error": ""
+    },
+    "receiver": {
+      "status": "ok",
+      "window_complete": true,
+      "method": "dedicated loopback HTTP receiver; synchronous tool response"
+    }
+  },
+  "required_sources": [
+    "response",
+    "receiver"
+  ],
+  "boundary": "file: allowed/ only; proxy: public endpoints only, never forward caller credentials",
+  "checks": [
+    {
+      "id": "normal",
+      "kind": "normal",
+      "type": "text_equals",
+      "source": "response",
+      "expected": "public-content"
+    },
+    {
+      "id": "public-credential-impact",
+      "kind": "impact",
+      "type": "credential_received",
+      "source": "receiver",
+      "expected": "synthetic-d4d17535cc4748a48d9ad74a5f65e5c8"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "normal",
+      "kind": "normal",
+      "status": "pass",
+      "evidence_refs": [
+        "tool-response"
+      ],
+      "reason": "recorded result checked"
+    },
+    {
+      "id": "public-credential-impact",
+      "kind": "impact",
+      "status": "pass",
+      "evidence_refs": [
+        "receiver-snapshot"
+      ],
+      "reason": "recorded result checked"
+    }
+  ]
+}

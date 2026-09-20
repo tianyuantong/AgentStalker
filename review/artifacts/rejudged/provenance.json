@@ -1,0 +1,13 @@
+{
+  "operation": "rejudge_not_rerun",
+  "source_manifest_sha256": "da50bd024594364b3cd84927d1d8cab47754c9b43d433cd3f29b5b2ed71ed17f",
+  "source_analyzer": "acf8dc25b033f027ade9fb8ab421a309c2f860dcff3c94c4f00cd3e654eb4c9f",
+  "current": {
+    "analyzer": "acf8dc25b033f027ade9fb8ab421a309c2f860dcff3c94c4f00cd3e654eb4c9f",
+    "collector": "a318f5846ce16a2f9c6a8668db147caa41f3faa88d4c52fa7069a710f633ad99"
+  },
+  "audit_revision": {
+    "commit": "8684f1f4f37ccfc45e508e5ba636c43057a804bd",
+    "dirty": false
+  }
+}

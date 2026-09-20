@@ -1,0 +1,226 @@
+{
+  "schema_version": 2,
+  "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+  "audit_revision": {
+    "commit": "8684f1f4f37ccfc45e508e5ba636c43057a804bd",
+    "dirty": false
+  },
+  "comparison": {
+    "analyzer": "acf8dc25b033f027ade9fb8ab421a309c2f860dcff3c94c4f00cd3e654eb4c9f",
+    "collector": "a318f5846ce16a2f9c6a8668db147caa41f3faa88d4c52fa7069a710f633ad99",
+    "suite": "0059aa2d1470e93e22de5a3d2323823007c446dfd76bbd5cce00ae2929590f28",
+    "fixture": "8aef2fc31155b1ca594388ecfb2f00cfe0f816d1ef152ad33113dea83bd72bbf",
+    "environment": {
+      "python": "3.13.12",
+      "system": "Darwin",
+      "dependencies": {
+        "mcp": "1.30.0",
+        "requests": "2.34.2",
+        "pyyaml": "6.0.3",
+        "jinja2": "3.1.6",
+        "regex": "2026.9.10"
+      }
+    },
+    "invariants": {
+      "type": "mcp-regression",
+      "timeout_seconds": 10,
+      "model": null,
+      "permissions": "file: allowed/ only; proxy: public endpoints only, never forward caller credentials",
+      "initial_state": "fresh isolated test tree and receiver per case"
+    }
+  },
+  "suite": {
+    "schema_version": 2,
+    "description": "Tool-boundary paired regression, no LLM",
+    "cases": [
+      {
+        "id": "file-direct",
+        "kind": "attack",
+        "group": "file",
+        "operation": "read_file",
+        "selector": "direct"
+      },
+      {
+        "id": "file-parent",
+        "kind": "attack",
+        "group": "file",
+        "operation": "read_file",
+        "selector": "parent"
+      },
+      {
+        "id": "file-symlink",
+        "kind": "attack",
+        "group": "file",
+        "operation": "read_file",
+        "selector": "symlink"
+      },
+      {
+        "id": "file-normal-ordinary",
+        "kind": "normal",
+        "group": "file",
+        "operation": "read_file",
+        "selector": "ordinary"
+      },
+      {
+        "id": "file-normal-sibling-name",
+        "kind": "normal",
+        "group": "file",
+        "operation": "read_file",
+        "selector": "sibling-name"
+      },
+      {
+        "id": "file-normal-nested",
+        "kind": "normal",
+        "group": "file",
+        "operation": "read_file",
+        "selector": "nested"
+      },
+      {
+        "id": "proxy-one",
+        "kind": "attack",
+        "group": "proxy",
+        "operation": "proxy_request",
+        "selector": "private-one"
+      },
+      {
+        "id": "proxy-two",
+        "kind": "attack",
+        "group": "proxy",
+        "operation": "proxy_request",
+        "selector": "private-two"
+      },
+      {
+        "id": "proxy-three",
+        "kind": "attack",
+        "group": "proxy",
+        "operation": "proxy_request",
+        "selector": "private-three"
+      },
+      {
+        "id": "proxy-normal-one",
+        "kind": "normal",
+        "group": "proxy",
+        "operation": "proxy_request",
+        "selector": "public-one"
+      },
+      {
+        "id": "proxy-normal-two",
+        "kind": "normal",
+        "group": "proxy",
+        "operation": "proxy_request",
+        "selector": "public-two"
+      },
+      {
+        "id": "proxy-normal-three",
+        "kind": "normal",
+        "group": "proxy",
+        "operation": "proxy_request",
+        "selector": "public-three"
+      }
+    ]
+  },
+  "target": {
+    "variant": "vulnerable",
+    "fingerprint": "1145d0c82df86f14c52a233db946f6f4b203b66722685140f0db36035bb6aa06"
+  },
+  "remediation": null,
+  "planned_cases": 12,
+  "records": [
+    {
+      "case_id": "file-direct",
+      "attempt_id": "1",
+      "raw": "file-direct/1/raw.json",
+      "raw_sha256": "ab16009d3068041723ac4de8d86e2b5c8b8fe0c143ad18f6ee1dc1273ce480f1",
+      "judged": "file-direct/1/evidence.json",
+      "judged_sha256": "5aa8e5c8facde4ead7515d9f9b72702045d21d1d0f3ce34cc8fffec1324e0bfc"
+    },
+    {
+      "case_id": "file-parent",
+      "attempt_id": "1",
+      "raw": "file-parent/1/raw.json",
+      "raw_sha256": "31120596fa9706149ee70ee528b66877163332e6264c81e4a163d949c4c5293e",
+      "judged": "file-parent/1/evidence.json",
+      "judged_sha256": "7766dc1697a11014114122f342245183370f4d2b175c33b6097ee4522ed8d219"
+    },
+    {
+      "case_id": "file-symlink",
+      "attempt_id": "1",
+      "raw": "file-symlink/1/raw.json",
+      "raw_sha256": "9ebc6989a2ad288741443dae2647685184452d813fc9a4ff8ff6d4cfead32ebf",
+      "judged": "file-symlink/1/evidence.json",
+      "judged_sha256": "5ddd1cd1b4f077e3d46906ceee2134f4586a0417a531391107257d34b939b170"
+    },
+    {
+      "case_id": "file-normal-ordinary",
+      "attempt_id": "1",
+      "raw": "file-normal-ordinary/1/raw.json",
+      "raw_sha256": "04f976fd69c680b36b72e816f09ccaa770e0c4a3ad028cebe884fcff8ec9ee49",
+      "judged": "file-normal-ordinary/1/evidence.json",
+      "judged_sha256": "51992f8476c8c77ad38738bc6d8ca13ba0c2b7c753dd0becb2de445f7fa6c7a6"
+    },
+    {
+      "case_id": "file-normal-sibling-name",
+      "attempt_id": "1",
+      "raw": "file-normal-sibling-name/1/raw.json",
+      "raw_sha256": "dea3344467eb10cf3ca7f2bb63e57e23d156264b579d4c3292170c553661b3ed",
+      "judged": "file-normal-sibling-name/1/evidence.json",
+      "judged_sha256": "da5518309422aff952a775a8c791a5abd77879e8413ed2e0efb0e71fade3a02b"
+    },
+    {
+      "case_id": "file-normal-nested",
+      "attempt_id": "1",
+      "raw": "file-normal-nested/1/raw.json",
+      "raw_sha256": "91e2f32510b1e62fff1c0e01333405c707c71a8ccede3e3ee30bb96069ecaa98",
+      "judged": "file-normal-nested/1/evidence.json",
+      "judged_sha256": "252c661dd5c1721dc1d49ec13d1f25fe57da8bbd38db37c6835a7dd9fdfe212f"
+    },
+    {
+      "case_id": "proxy-one",
+      "attempt_id": "1",
+      "raw": "proxy-one/1/raw.json",
+      "raw_sha256": "a613d11e242dbf283db55b25756bb84e9a936879f6179830faebe9a74075781f",
+      "judged": "proxy-one/1/evidence.json",
+      "judged_sha256": "233378f4c8c108a0ce5c70ba3db3ef3e85070ee9105e3346cf0bd30878531ff7"
+    },
+    {
+      "case_id": "proxy-two",
+      "attempt_id": "1",
+      "raw": "proxy-two/1/raw.json",
+      "raw_sha256": "5e571934badc4d537a2d74bf58a163b22e4e7cdd6b4ed85c2f6424dd679500fe",
+      "judged": "proxy-two/1/evidence.json",
+      "judged_sha256": "900bd50415bf0dbfffff1ceab289286b3dfd9b5e7f344841cd27069230523a52"
+    },
+    {
+      "case_id": "proxy-three",
+      "attempt_id": "1",
+      "raw": "proxy-three/1/raw.json",
+      "raw_sha256": "8e521c48e9e3af35e02390423e3233070056bcd933fc0211bb555e157f127f31",
+      "judged": "proxy-three/1/evidence.json",
+      "judged_sha256": "06ee61bf4194af9c6e130c14216c0506c46a056dbdb92f8422f6947cec2e9e1f"
+    },
+    {
+      "case_id": "proxy-normal-one",
+      "attempt_id": "1",
+      "raw": "proxy-normal-one/1/raw.json",
+      "raw_sha256": "717b3212b2292bad2d33ef17fe2601b3719ec4ed215d6bc69ffde188a58b3645",
+      "judged": "proxy-normal-one/1/evidence.json",
+      "judged_sha256": "5050c29118c45c96173781ddadcd80c8300e14224a4c07cfbfb3452fcfeb42ca"
+    },
+    {
+      "case_id": "proxy-normal-two",
+      "attempt_id": "1",
+      "raw": "proxy-normal-two/1/raw.json",
+      "raw_sha256": "97c475b11f5b06e344c88bc36e2fb37c13e9136d6b87bb6fa969e97b68463b03",
+      "judged": "proxy-normal-two/1/evidence.json",
+      "judged_sha256": "45fc240457429d2ddd494ee3a6925aa6eea7e34c8bde9c7cb70e5f453804e29e"
+    },
+    {
+      "case_id": "proxy-normal-three",
+      "attempt_id": "1",
+      "raw": "proxy-normal-three/1/raw.json",
+      "raw_sha256": "81500c3ffd62eb917198ec22ffd5b91223df6a493571bb40dd93d56acfe9ab72",
+      "judged": "proxy-normal-three/1/evidence.json",
+      "judged_sha256": "966d716a4f3f9ed40400965764a6b7ef3806a19c7d24d8932bc0af6a58212123"
+    }
+  ]
+}

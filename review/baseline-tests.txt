@@ -1,0 +1,147 @@
+..........................................FFF........................... [ 94%]
+....                                                                     [100%]
+=================================== FAILURES ===================================
+_______________________ test_mcp_monitor_finds_squatting _______________________
+
+    def test_mcp_monitor_finds_squatting():
+        """R009 setup: with read_file in local tools, MCPMonitor must emit a
+        tool_squatting event."""
+>       events = _inspect(local_tools=["read_file", "search"])
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mcp_runtime.py:51: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_mcp_runtime.py:38: in _inspect
+    events = mon.inspect_server(
+sandbox/monitoring/mcp_monitor.py:82: in inspect_server
+    tools = executor.list_tools()
+            ^^^^^^^^^^^^^^^^^^^^^
+sandbox/executors/mcp.py:144: in list_tools
+    response = self._send({
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sandbox.executors.mcp.MCPExecutor object at 0x106e6d810>
+request = {'jsonrpc': '2.0', 'id': 101, 'method': 'tools/list', 'params': {}}
+
+    def _send(self, request: dict) -> dict:
+        """发请求并读响应。
+    
+        增强(Commit 4):跳过 server 发出的 notification/log 行(它们没有 'id'
+        或 'method' 字段),只返回与请求 'id' 匹配的响应。这修复旧版"只读一行"
+        在 server 发 notification 时错乱的问题。
+        """
+        if not self.process:
+            return {}
+>       self.process.stdin.write(json.dumps(request) + "\n")
+E       BrokenPipeError: [Errno 32] Broken pipe
+
+sandbox/executors/mcp.py:81: BrokenPipeError
+_________________ test_mcp_monitor_finds_description_poisoning _________________
+
+    def test_mcp_monitor_finds_description_poisoning():
+        """R010 setup: the summarize tool's poisoned description must be detected at runtime."""
+>       events = _inspect(local_tools=[])
+                 ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mcp_runtime.py:60: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_mcp_runtime.py:38: in _inspect
+    events = mon.inspect_server(
+sandbox/monitoring/mcp_monitor.py:82: in inspect_server
+    tools = executor.list_tools()
+            ^^^^^^^^^^^^^^^^^^^^^
+sandbox/executors/mcp.py:144: in list_tools
+    response = self._send({
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sandbox.executors.mcp.MCPExecutor object at 0x106e6d090>
+request = {'jsonrpc': '2.0', 'id': 101, 'method': 'tools/list', 'params': {}}
+
+    def _send(self, request: dict) -> dict:
+        """发请求并读响应。
+    
+        增强(Commit 4):跳过 server 发出的 notification/log 行(它们没有 'id'
+        或 'method' 字段),只返回与请求 'id' 匹配的响应。这修复旧版"只读一行"
+        在 server 发 notification 时错乱的问题。
+        """
+        if not self.process:
+            return {}
+>       self.process.stdin.write(json.dumps(request) + "\n")
+E       BrokenPipeError: [Errno 32] Broken pipe
+
+sandbox/executors/mcp.py:81: BrokenPipeError
+___________________ test_no_squatting_when_no_local_conflict ___________________
+
+    def test_no_squatting_when_no_local_conflict():
+        """Without read_file in local tools, no squatting event."""
+>       events = _inspect(local_tools=["totally_different_name"])
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mcp_runtime.py:68: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_mcp_runtime.py:38: in _inspect
+    events = mon.inspect_server(
+sandbox/monitoring/mcp_monitor.py:82: in inspect_server
+    tools = executor.list_tools()
+            ^^^^^^^^^^^^^^^^^^^^^
+sandbox/executors/mcp.py:144: in list_tools
+    response = self._send({
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sandbox.executors.mcp.MCPExecutor object at 0x106eda190>
+request = {'jsonrpc': '2.0', 'id': 101, 'method': 'tools/list', 'params': {}}
+
+    def _send(self, request: dict) -> dict:
+        """发请求并读响应。
+    
+        增强(Commit 4):跳过 server 发出的 notification/log 行(它们没有 'id'
+        或 'method' 字段),只返回与请求 'id' 匹配的响应。这修复旧版"只读一行"
+        在 server 发 notification 时错乱的问题。
+        """
+        if not self.process:
+            return {}
+>       self.process.stdin.write(json.dumps(request) + "\n")
+E       BrokenPipeError: [Errno 32] Broken pipe
+
+sandbox/executors/mcp.py:81: BrokenPipeError
+=============================== warnings summary ===============================
+tests/test_mcp_runtime.py::test_mcp_monitor_finds_squatting
+tests/test_mcp_runtime.py::test_mcp_monitor_finds_description_poisoning
+tests/test_mcp_runtime.py::test_no_squatting_when_no_local_conflict
+  <repo>/.venv/lib/python3.13/site-packages/_pytest/unraisableexception.py:67: PytestUnraisableExceptionWarning: Exception ignored in: <_io.TextIOWrapper name=12 encoding='UTF-8'>
+  
+  Traceback (most recent call last):
+    File "<repo>/sandbox/monitoring/mcp_monitor.py", line 82, in inspect_server
+      tools = executor.list_tools()
+    File "<repo>/sandbox/executors/mcp.py", line 144, in list_tools
+      response = self._send({
+          "jsonrpc": "2.0", "id": self._next_request_id(),
+          "method": "tools/list", "params": {},
+      })
+    File "<repo>/sandbox/executors/mcp.py", line 81, in _send
+      self.process.stdin.write(json.dumps(request) + "\n")
+      ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  BrokenPipeError: [Errno 32] Broken pipe
+  
+  During handling of the above exception, another exception occurred:
+  
+  BrokenPipeError: [Errno 32] Broken pipe
+  
+  During handling of the above exception, another exception occurred:
+  
+  Traceback (most recent call last):
+    File "<repo>/sandbox/executors/mcp.py", line 162, in teardown
+      self.process = None
+      ^^^^^^^^^^^^
+  BrokenPipeError: [Errno 32] Broken pipe
+  
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+    warnings.warn(pytest.PytestUnraisableExceptionWarning(msg))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_mcp_runtime.py::test_mcp_monitor_finds_squatting - BrokenPi...
+FAILED tests/test_mcp_runtime.py::test_mcp_monitor_finds_description_poisoning
+FAILED tests/test_mcp_runtime.py::test_no_squatting_when_no_local_conflict - ...
+3 failed, 73 passed, 3 warnings in 2.19s

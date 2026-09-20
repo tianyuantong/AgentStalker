@@ -1,0 +1,112 @@
+{
+  "evidence_id": "",
+  "timestamp": 0.0,
+  "test_case_id": "proxy-three",
+  "title": "proxy-three",
+  "severity": "medium",
+  "layers": [],
+  "events": [
+    {
+      "run_id": "9e9c1ad90cb84922bf046ab9395a4394",
+      "case_id": "proxy-three",
+      "attempt_id": "1",
+      "session_id": "bc0c2a1e90b04f5a820a9b445e8c664e",
+      "event_id": "tool-response",
+      "source": "response",
+      "layer": "mcp",
+      "data": {
+        "text": "DENIED: target not allowed",
+        "rpc": {
+          "jsonrpc": "2.0",
+          "id": 101,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "DENIED: target not allowed"
+              }
+            ],
+            "structuredContent": {
+              "result": "DENIED: target not allowed"
+            },
+            "isError": false
+          }
+        },
+        "tool": "proxy_request",
+        "arguments": {
+          "url": "http://127.0.0.1:53495/private/bc0c2a1e90b04f5a820a9b445e8c664e"
+        }
+      }
+    },
+    {
+      "run_id": "9e9c1ad90cb84922bf046ab9395a4394",
+      "case_id": "proxy-three",
+      "attempt_id": "1",
+      "session_id": "bc0c2a1e90b04f5a820a9b445e8c664e",
+      "event_id": "receiver-snapshot",
+      "source": "receiver",
+      "data": {
+        "requests": []
+      }
+    }
+  ],
+  "related_owasp": [],
+  "exploit_chain": [],
+  "raw_evidence_files": [],
+  "trace_id": "",
+  "user_id": "",
+  "agent_id": "",
+  "session_id": "",
+  "description": "",
+  "impact": "",
+  "remediation": "",
+  "verdict": "inconclusive",
+  "confidence": 0.0,
+  "metadata": {
+    "case_kind": "attack",
+    "group": "proxy",
+    "case_template_hash": "9479d16bfd4a86d8443da1ee0dee42b216c913bf603c97d1ccf0bf50d3da6343",
+    "association": "isolated_process_and_receiver"
+  },
+  "schema_version": 2,
+  "context": {
+    "run_id": "9e9c1ad90cb84922bf046ab9395a4394",
+    "case_id": "proxy-three",
+    "attempt_id": "1",
+    "session_id": "bc0c2a1e90b04f5a820a9b445e8c664e"
+  },
+  "execution": {
+    "status": "completed",
+    "reset_status": "ok",
+    "error": "",
+    "duration_ms": 246
+  },
+  "collection": {
+    "response": {
+      "status": "ok",
+      "window_complete": true,
+      "method": "matching MCP JSON-RPC response",
+      "error": ""
+    },
+    "receiver": {
+      "status": "ok",
+      "window_complete": true,
+      "method": "dedicated loopback HTTP receiver; synchronous tool response"
+    }
+  },
+  "required_sources": [
+    "response",
+    "receiver"
+  ],
+  "boundary": "file: allowed/ only; proxy: public endpoints only, never forward caller credentials",
+  "checks": [
+    {
+      "id": "impact",
+      "kind": "impact",
+      "type": "credential_received",
+      "source": "receiver",
+      "expected": "synthetic-97bd595909d1415d8b8e0c3fdf71e786"
+    }
+  ],
+  "assertions": []
+}

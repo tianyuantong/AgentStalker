@@ -1,0 +1,23 @@
+[
+  {
+    "check": "still-vulnerable",
+    "command": "python -m sandbox.regression compare vulnerable vulnerable --output still-vulnerable",
+    "expected_exit": 1,
+    "actual_exit": 1,
+    "stderr": ""
+  },
+  {
+    "check": "no-positive-baseline",
+    "command": "python -m sandbox.regression compare fixed fixed --output no-positive-baseline",
+    "expected_exit": 2,
+    "actual_exit": 2,
+    "stderr": ""
+  },
+  {
+    "check": "refuse-rejudge-overwrite",
+    "command": "python -m sandbox.regression rejudge vulnerable --output rejudged",
+    "expected_exit": 2,
+    "actual_exit": 2,
+    "stderr": "Invalid/incomplete evidence: [Errno 17] File exists: 'rejudged'\n"
+  }
+]
