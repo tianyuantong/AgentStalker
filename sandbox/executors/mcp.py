@@ -13,6 +13,9 @@ import time
 
 from .api_executor import ExecutionResult
 
+# One newline-delimited JSON-RPC message; the pipe is in text mode, so this counts characters.
+MAX_FRAME_CHARS = 1 << 20
+
 
 class MCPExecutor:
     def __init__(self, mcp_command="python -m my_mcp_server", cwd=".", *, env=None, timeout=15):
@@ -34,8 +37,11 @@ class MCPExecutor:
                                         stderr=subprocess.PIPE, cwd=self.cwd, env=self.env,
                                         text=True, bufsize=1)
         def stdout_reader():
-            for line in self.process.stdout:
+            # Bounded read: a line that never ends is rejected at the cap, not buffered whole first.
+            while line := self.process.stdout.readline(MAX_FRAME_CHARS + 1):
                 self._lines.put(line)
+                if len(line) > MAX_FRAME_CHARS:
+                    break
             self._lines.put(None)
         def stderr_reader():
             for line in self.process.stderr:
@@ -77,8 +83,8 @@ class MCPExecutor:
                 raise TimeoutError("MCP response deadline exceeded") from exc
             if not line:
                 raise RuntimeError("MCP process closed output")
-            if len(line) > 1048576:
-                raise RuntimeError("MCP response exceeds 1 MiB")
+            if len(line) > MAX_FRAME_CHARS:
+                raise RuntimeError("MCP response exceeds the frame cap")
             try:
                 message = json.loads(line)
             except json.JSONDecodeError:

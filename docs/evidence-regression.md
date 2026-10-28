@@ -31,7 +31,7 @@ Rules R001–R011 are retained as signals, and the legacy runner's five heuristi
 - The runner now requires an explicit new output directory. Existing output is never replaced. The correlation CLI honors `--output` and also refuses overwrite.
 - The original `api_executor --attack-graph` CLI and side-effect probe method are retained. They report transport/task observations, not an unsupported safe/exploited verdict.
 - API/replay keep public class names. Context can be passed across turns; task assertions are separate from safety, unknown assertion types no longer pass, and errors propagate. Configure `session_field` when a target uses `conversation_id` instead of `session_id`.
-- MCP calls have response deadlines and child cleanup. Tool-level errors are execution errors. SDK v1 is bounded as `mcp<2` because the original fixture imports `mcp.server.fastmcp`.
+- MCP calls have response deadlines, a per-message frame cap applied while reading, and child cleanup. Tool-level errors are execution errors. SDK v1 is bounded as `mcp<2` because the original fixture imports `mcp.server.fastmcp`.
 - Nested packages and the evidence schema are included in the built wheel. The standalone `fastmcp` dependency was redundant and is no longer required.
 
 ## Paired runs and offline analysis

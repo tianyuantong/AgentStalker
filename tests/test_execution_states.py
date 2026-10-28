@@ -86,6 +86,23 @@ def test_mcp_timeout_cleans_child(tmp_path):
     assert ex.process is None
 
 
+def test_mcp_oversized_frame_rejected_while_reading(tmp_path):
+    # An unterminated 4 Mi-character line: the cap must reject it before the deadline does.
+    child = tmp_path / 'flood.py'
+    child.write_text('import sys, time\n'
+                     'sys.stdin.readline()\n'
+                     'print(\'{"jsonrpc": "2.0", "id": 0, "result": {}}\', flush=True)\n'
+                     'sys.stdout.write("x" * (4 << 20)); sys.stdout.flush()\n'
+                     'time.sleep(30)\n')
+    ex = MCPExecutor([sys.executable, str(child)], cwd=tmp_path, timeout=5)
+    try:
+        r = ex.execute({'tool':'x'})
+        assert r.status == 'error' and 'frame cap' in r.error
+    finally:
+        ex.teardown()
+    assert ex.process is None
+
+
 def test_mcp_tool_error_is_not_completed(monkeypatch):
     ex = MCPExecutor()
     monkeypatch.setattr(ex, 'call_tool', lambda *args: {'result': {'isError':True, 'content':[]}})
