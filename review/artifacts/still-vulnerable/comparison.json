@@ -14,13 +14,13 @@
         "status": "completed",
         "reset_status": "ok",
         "error": "",
-        "duration_ms": 249
+        "duration_ms": 171
       },
       "after_execution": {
         "status": "completed",
         "reset_status": "ok",
         "error": "",
-        "duration_ms": 249
+        "duration_ms": 171
       },
       "before_evidence": "file-direct/1/evidence.json",
       "after_evidence": "file-direct/1/evidence.json"
@@ -37,13 +37,13 @@
         "status": "completed",
         "reset_status": "ok",
         "error": "",
-        "duration_ms": 231
+        "duration_ms": 200
       },
       "after_execution": {
         "status": "completed",
         "reset_status": "ok",
         "error": "",
-        "duration_ms": 231
+        "duration_ms": 200
       },
       "before_evidence": "file-parent/1/evidence.json",
       "after_evidence": "file-parent/1/evidence.json"
@@ -60,13 +60,13 @@
         "status": "completed",
         "reset_status": "ok",
         "error": "",
-        "duration_ms": 233
+        "duration_ms": 205
       },
       "after_execution": {
         "status": "completed",
         "reset_status": "ok",
         "error": "",
-        "duration_ms": 233
+        "duration_ms": 205
       },
       "before_evidence": "file-symlink/1/evidence.json",
       "after_evidence": "file-symlink/1/evidence.json"
@@ -83,13 +83,13 @@
         "status": "completed",
         "reset_status": "ok",
         "error": "",
-        "duration_ms": 234
+        "duration_ms": 198
       },
       "after_execution": {
         "status": "completed",
         "reset_status": "ok",
         "error": "",
-        "duration_ms": 234
+        "duration_ms": 198
       },
       "before_evidence": "file-normal-ordinary/1/evidence.json",
       "after_evidence": "file-normal-ordinary/1/evidence.json"
@@ -106,13 +106,13 @@
         "status": "completed",
         "reset_status": "ok",
         "error": "",
-        "duration_ms": 235
+        "duration_ms": 200
       },
       "after_execution": {
         "status": "completed",
         "reset_status": "ok",
         "error": "",
-        "duration_ms": 235
+        "duration_ms": 200
       },
       "before_evidence": "file-normal-sibling-name/1/evidence.json",
       "after_evidence": "file-normal-sibling-name/1/evidence.json"
@@ -129,13 +129,13 @@
         "status": "completed",
         "reset_status": "ok",
         "error": "",
-        "duration_ms": 248
+        "duration_ms": 202
       },
       "after_execution": {
         "status": "completed",
         "reset_status": "ok",
         "error": "",
-        "duration_ms": 248
+        "duration_ms": 202
       },
       "before_evidence": "file-normal-nested/1/evidence.json",
       "after_evidence": "file-normal-nested/1/evidence.json"
@@ -152,13 +152,13 @@
         "status": "completed",
         "reset_status": "ok",
         "error": "",
-        "duration_ms": 249
+        "duration_ms": 215
       },
       "after_execution": {
         "status": "completed",
         "reset_status": "ok",
         "error": "",
-        "duration_ms": 249
+        "duration_ms": 215
       },
       "before_evidence": "proxy-one/1/evidence.json",
       "after_evidence": "proxy-one/1/evidence.json"
@@ -175,13 +175,13 @@
         "status": "completed",
         "reset_status": "ok",
         "error": "",
-        "duration_ms": 252
+        "duration_ms": 214
       },
       "after_execution": {
         "status": "completed",
         "reset_status": "ok",
         "error": "",
-        "duration_ms": 252
+        "duration_ms": 214
       },
       "before_evidence": "proxy-two/1/evidence.json",
       "after_evidence": "proxy-two/1/evidence.json"
@@ -198,13 +198,13 @@
         "status": "completed",
         "reset_status": "ok",
         "error": "",
-        "duration_ms": 242
+        "duration_ms": 207
       },
       "after_execution": {
         "status": "completed",
         "reset_status": "ok",
         "error": "",
-        "duration_ms": 242
+        "duration_ms": 207
       },
       "before_evidence": "proxy-three/1/evidence.json",
       "after_evidence": "proxy-three/1/evidence.json"
@@ -221,13 +221,13 @@
         "status": "completed",
         "reset_status": "ok",
         "error": "",
-        "duration_ms": 238
+        "duration_ms": 214
       },
       "after_execution": {
         "status": "completed",
         "reset_status": "ok",
         "error": "",
-        "duration_ms": 238
+        "duration_ms": 214
       },
       "before_evidence": "proxy-normal-one/1/evidence.json",
       "after_evidence": "proxy-normal-one/1/evidence.json"
@@ -244,13 +244,13 @@
         "status": "completed",
         "reset_status": "ok",
         "error": "",
-        "duration_ms": 248
+        "duration_ms": 204
       },
       "after_execution": {
         "status": "completed",
         "reset_status": "ok",
         "error": "",
-        "duration_ms": 248
+        "duration_ms": 204
       },
       "before_evidence": "proxy-normal-two/1/evidence.json",
       "after_evidence": "proxy-normal-two/1/evidence.json"
@@ -267,13 +267,13 @@
         "status": "completed",
         "reset_status": "ok",
         "error": "",
-        "duration_ms": 246
+        "duration_ms": 209
       },
       "after_execution": {
         "status": "completed",
         "reset_status": "ok",
         "error": "",
-        "duration_ms": 246
+        "duration_ms": 209
       },
       "before_evidence": "proxy-normal-three/1/evidence.json",
       "after_evidence": "proxy-normal-three/1/evidence.json"

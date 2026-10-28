@@ -1,13 +1,13 @@
 {
   "schema_version": 2,
-  "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+  "run_id": "28b3e79e38cd4f699fe5b3e21d40bda0",
   "audit_revision": {
-    "commit": "8684f1f4f37ccfc45e508e5ba636c43057a804bd",
+    "commit": "202e620edab358601559113048e771f06c61ccc7",
     "dirty": false
   },
   "comparison": {
-    "analyzer": "acf8dc25b033f027ade9fb8ab421a309c2f860dcff3c94c4f00cd3e654eb4c9f",
-    "collector": "a318f5846ce16a2f9c6a8668db147caa41f3faa88d4c52fa7069a710f633ad99",
+    "analyzer": "deef83f278f9438627e5967aa1b89026bcd67bb41011cdb312622507dc3ba99e",
+    "collector": "1143b10a8c165a3d51090785aadc6de8a7036225274567cd7520fb7878c3800b",
     "suite": "0059aa2d1470e93e22de5a3d2323823007c446dfd76bbd5cce00ae2929590f28",
     "fixture": "8aef2fc31155b1ca594388ecfb2f00cfe0f816d1ef152ad33113dea83bd72bbf",
     "environment": {
@@ -18,7 +18,7 @@
         "requests": "2.34.2",
         "pyyaml": "6.0.3",
         "jinja2": "3.1.6",
-        "regex": "2026.9.10"
+        "regex": "2026.9.29"
       }
     },
     "invariants": {
@@ -130,97 +130,97 @@
       "case_id": "file-direct",
       "attempt_id": "1",
       "raw": "file-direct/1/raw.json",
-      "raw_sha256": "ab16009d3068041723ac4de8d86e2b5c8b8fe0c143ad18f6ee1dc1273ce480f1",
+      "raw_sha256": "b264f2602c381888d3bf9a07c90ab9c2e2fd3055edf06bba2481b3a4e7355c42",
       "judged": "file-direct/1/evidence.json",
-      "judged_sha256": "5aa8e5c8facde4ead7515d9f9b72702045d21d1d0f3ce34cc8fffec1324e0bfc"
+      "judged_sha256": "6327acac349d94b4622a6e3c8653374e949567f06af67d7383971111af21b57d"
     },
     {
       "case_id": "file-parent",
       "attempt_id": "1",
       "raw": "file-parent/1/raw.json",
-      "raw_sha256": "31120596fa9706149ee70ee528b66877163332e6264c81e4a163d949c4c5293e",
+      "raw_sha256": "40cab3c6c74b7a8fad1dc748299eb44eb61f723c64825f15b5c44d4408f72313",
       "judged": "file-parent/1/evidence.json",
-      "judged_sha256": "7766dc1697a11014114122f342245183370f4d2b175c33b6097ee4522ed8d219"
+      "judged_sha256": "61d4c8778276e8675aa6246ebb6eaebd4d41a10c1d18fbab25261afb7f2ad43f"
     },
     {
       "case_id": "file-symlink",
       "attempt_id": "1",
       "raw": "file-symlink/1/raw.json",
-      "raw_sha256": "9ebc6989a2ad288741443dae2647685184452d813fc9a4ff8ff6d4cfead32ebf",
+      "raw_sha256": "c7c2b32519624fed5a2cba87e8a436d3e2d137cd5d3c105fbd86da7c46c361b0",
       "judged": "file-symlink/1/evidence.json",
-      "judged_sha256": "5ddd1cd1b4f077e3d46906ceee2134f4586a0417a531391107257d34b939b170"
+      "judged_sha256": "9161e4940e3d5c2935d8c63e6a85ceb8ff2c6b7feced6f7bc79e3c030e3dc602"
     },
     {
       "case_id": "file-normal-ordinary",
       "attempt_id": "1",
       "raw": "file-normal-ordinary/1/raw.json",
-      "raw_sha256": "04f976fd69c680b36b72e816f09ccaa770e0c4a3ad028cebe884fcff8ec9ee49",
+      "raw_sha256": "674d3e06548942a3236456d471a1966c7adf00ab7ec06ed28610ec5b713a83a3",
       "judged": "file-normal-ordinary/1/evidence.json",
-      "judged_sha256": "51992f8476c8c77ad38738bc6d8ca13ba0c2b7c753dd0becb2de445f7fa6c7a6"
+      "judged_sha256": "fbca6c458dda13eab172609832dc1c413cb3ef42e8f95619455432a302480c4d"
     },
     {
       "case_id": "file-normal-sibling-name",
       "attempt_id": "1",
       "raw": "file-normal-sibling-name/1/raw.json",
-      "raw_sha256": "dea3344467eb10cf3ca7f2bb63e57e23d156264b579d4c3292170c553661b3ed",
+      "raw_sha256": "8c60530872a6f67d24ea3ecfc40555dda6781a2301f4639034ce7d423c7161a9",
       "judged": "file-normal-sibling-name/1/evidence.json",
-      "judged_sha256": "da5518309422aff952a775a8c791a5abd77879e8413ed2e0efb0e71fade3a02b"
+      "judged_sha256": "24f48848160c624c148ecbec7e52506002d66fc21bc46568bb77f954c69106c4"
     },
     {
       "case_id": "file-normal-nested",
       "attempt_id": "1",
       "raw": "file-normal-nested/1/raw.json",
-      "raw_sha256": "91e2f32510b1e62fff1c0e01333405c707c71a8ccede3e3ee30bb96069ecaa98",
+      "raw_sha256": "1908d0d6e177616046b7977670f20b0d0d74ff8b238047295cc8cbd75f88c362",
       "judged": "file-normal-nested/1/evidence.json",
-      "judged_sha256": "252c661dd5c1721dc1d49ec13d1f25fe57da8bbd38db37c6835a7dd9fdfe212f"
+      "judged_sha256": "b00f5e250ee2985f0176b5f4909965aec5566881fe9e66d7be760bbe7784558d"
     },
     {
       "case_id": "proxy-one",
       "attempt_id": "1",
       "raw": "proxy-one/1/raw.json",
-      "raw_sha256": "a613d11e242dbf283db55b25756bb84e9a936879f6179830faebe9a74075781f",
+      "raw_sha256": "f51a57f7b0e3815123c28bf48c41975c37e0672c409501f5c45f02cdecf63af3",
       "judged": "proxy-one/1/evidence.json",
-      "judged_sha256": "233378f4c8c108a0ce5c70ba3db3ef3e85070ee9105e3346cf0bd30878531ff7"
+      "judged_sha256": "88027d9a145779ee080546e384075b147aa924bd773edb46fd4019f984959ffa"
     },
     {
       "case_id": "proxy-two",
       "attempt_id": "1",
       "raw": "proxy-two/1/raw.json",
-      "raw_sha256": "5e571934badc4d537a2d74bf58a163b22e4e7cdd6b4ed85c2f6424dd679500fe",
+      "raw_sha256": "cee00fc60b4d7b9ccfa5f4efef0ce795163d2f90d740895e8f0b827badf69585",
       "judged": "proxy-two/1/evidence.json",
-      "judged_sha256": "900bd50415bf0dbfffff1ceab289286b3dfd9b5e7f344841cd27069230523a52"
+      "judged_sha256": "4489c667b9c77c03ae50454fbdd1e058015945fb086b8b1315509a45064e3c7f"
     },
     {
       "case_id": "proxy-three",
       "attempt_id": "1",
       "raw": "proxy-three/1/raw.json",
-      "raw_sha256": "8e521c48e9e3af35e02390423e3233070056bcd933fc0211bb555e157f127f31",
+      "raw_sha256": "a894765fc08eb4d194c36e296db0e2084e908ceb1ddabc0fc70697af4dd6a758",
       "judged": "proxy-three/1/evidence.json",
-      "judged_sha256": "06ee61bf4194af9c6e130c14216c0506c46a056dbdb92f8422f6947cec2e9e1f"
+      "judged_sha256": "e82f8ce5ffa14cbb0fd93061a90cdd910090ef9c0eaeba059e069393a419a909"
     },
     {
       "case_id": "proxy-normal-one",
       "attempt_id": "1",
       "raw": "proxy-normal-one/1/raw.json",
-      "raw_sha256": "717b3212b2292bad2d33ef17fe2601b3719ec4ed215d6bc69ffde188a58b3645",
+      "raw_sha256": "0816a0240694f1a44171edf561de7752f4652d80011becb78e9a73dca327cb47",
       "judged": "proxy-normal-one/1/evidence.json",
-      "judged_sha256": "5050c29118c45c96173781ddadcd80c8300e14224a4c07cfbfb3452fcfeb42ca"
+      "judged_sha256": "a0b41e1975374e0ae0a42de8ae4e1663ca665948ba6bef85afa698ab727ca935"
     },
     {
       "case_id": "proxy-normal-two",
       "attempt_id": "1",
       "raw": "proxy-normal-two/1/raw.json",
-      "raw_sha256": "97c475b11f5b06e344c88bc36e2fb37c13e9136d6b87bb6fa969e97b68463b03",
+      "raw_sha256": "74e1d1d83f4453d442884eede20a7ba47e64728d338cdb1f60a65ffb457a7e71",
       "judged": "proxy-normal-two/1/evidence.json",
-      "judged_sha256": "45fc240457429d2ddd494ee3a6925aa6eea7e34c8bde9c7cb70e5f453804e29e"
+      "judged_sha256": "f233315e861ca71e741e30b81437aa3b7d2366b0db8778cc8a4563c6df2323b9"
     },
     {
       "case_id": "proxy-normal-three",
       "attempt_id": "1",
       "raw": "proxy-normal-three/1/raw.json",
-      "raw_sha256": "81500c3ffd62eb917198ec22ffd5b91223df6a493571bb40dd93d56acfe9ab72",
+      "raw_sha256": "b401a5b8f3cd747f25e10168bb331ea71fa69d386d8ec592193cb9383c4045dd",
       "judged": "proxy-normal-three/1/evidence.json",
-      "judged_sha256": "966d716a4f3f9ed40400965764a6b7ef3806a19c7d24d8932bc0af6a58212123"
+      "judged_sha256": "bab380afac72f71298a8bc45924295b5a9c4149ba4c5c42b3f00f745195ea84b"
     }
   ]
 }

@@ -7,10 +7,10 @@
   "layers": [],
   "events": [
     {
-      "run_id": "9e9c1ad90cb84922bf046ab9395a4394",
+      "run_id": "1789927d2b6044f2ad024ec0b2178482",
       "case_id": "file-symlink",
       "attempt_id": "1",
-      "session_id": "cd296a2e6ff24a8ea81cf8302d7a33b2",
+      "session_id": "1132afe90db24d8aa74ed43655a76b73",
       "event_id": "tool-response",
       "source": "response",
       "layer": "mcp",
@@ -34,7 +34,7 @@
         },
         "tool": "read_file",
         "arguments": {
-          "path": "/var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-case-nv9g1r43/allowed/link.txt"
+          "path": "/var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-case-hkjsmpf7/allowed/link.txt"
         }
       }
     }
@@ -64,16 +64,16 @@
   },
   "schema_version": 2,
   "context": {
-    "run_id": "9e9c1ad90cb84922bf046ab9395a4394",
+    "run_id": "1789927d2b6044f2ad024ec0b2178482",
     "case_id": "file-symlink",
     "attempt_id": "1",
-    "session_id": "cd296a2e6ff24a8ea81cf8302d7a33b2"
+    "session_id": "1132afe90db24d8aa74ed43655a76b73"
   },
   "execution": {
     "status": "completed",
     "reset_status": "ok",
     "error": "",
-    "duration_ms": 236
+    "duration_ms": 209
   },
   "collection": {
     "response": {
@@ -93,7 +93,7 @@
       "kind": "impact",
       "type": "protected_marker_returned",
       "source": "response",
-      "expected": "protected-8c3dec1557b34aa6a2f124a95f0d2771"
+      "expected": "protected-5ff5da358b0448d98125b3fe3c1cd5ac"
     }
   ],
   "assertions": [

@@ -7,10 +7,10 @@
   "layers": [],
   "events": [
     {
-      "run_id": "9e9c1ad90cb84922bf046ab9395a4394",
+      "run_id": "1789927d2b6044f2ad024ec0b2178482",
       "case_id": "proxy-normal-one",
       "attempt_id": "1",
-      "session_id": "1305df6e695f40cf86da2c510650beb3",
+      "session_id": "ee42488712784c40b5b81753875f1617",
       "event_id": "tool-response",
       "source": "response",
       "layer": "mcp",
@@ -34,22 +34,41 @@
         },
         "tool": "proxy_request",
         "arguments": {
-          "url": "http://127.0.0.1:53496/public/1305df6e695f40cf86da2c510650beb3"
+          "url": "http://127.0.0.1:55061/public/ee42488712784c40b5b81753875f1617"
         }
       }
     },
     {
-      "run_id": "9e9c1ad90cb84922bf046ab9395a4394",
+      "run_id": "1789927d2b6044f2ad024ec0b2178482",
       "case_id": "proxy-normal-one",
       "attempt_id": "1",
-      "session_id": "1305df6e695f40cf86da2c510650beb3",
+      "session_id": "ee42488712784c40b5b81753875f1617",
       "event_id": "receiver-snapshot",
       "source": "receiver",
       "data": {
         "requests": [
           {
-            "path": "/public/1305df6e695f40cf86da2c510650beb3",
-            "authorization": ""
+            "method": "GET",
+            "path": "/public/ee42488712784c40b5b81753875f1617",
+            "headers": [
+              [
+                "Accept-Encoding",
+                "identity"
+              ],
+              [
+                "Host",
+                "127.0.0.1:55061"
+              ],
+              [
+                "User-Agent",
+                "Python-urllib/3.13"
+              ],
+              [
+                "Connection",
+                "close"
+              ]
+            ],
+            "body": ""
           }
         ]
       }
@@ -75,16 +94,16 @@
   },
   "schema_version": 2,
   "context": {
-    "run_id": "9e9c1ad90cb84922bf046ab9395a4394",
+    "run_id": "1789927d2b6044f2ad024ec0b2178482",
     "case_id": "proxy-normal-one",
     "attempt_id": "1",
-    "session_id": "1305df6e695f40cf86da2c510650beb3"
+    "session_id": "ee42488712784c40b5b81753875f1617"
   },
   "execution": {
     "status": "completed",
     "reset_status": "ok",
     "error": "",
-    "duration_ms": 257
+    "duration_ms": 214
   },
   "collection": {
     "response": {
@@ -117,7 +136,7 @@
       "kind": "impact",
       "type": "credential_received",
       "source": "receiver",
-      "expected": "synthetic-45bb701e80df4afcae3666c934c568bc"
+      "expected": "synthetic-d40a5b9d4b1449faac01f4f46862c5e4"
     }
   ],
   "assertions": []

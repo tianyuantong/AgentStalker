@@ -5,7 +5,7 @@
 **Agent** **St**atic + **A**ttack-graph + **L**ive-replay **K**ernel<br>
 for treating an LLM agent as a system to be audited — not a model to be aligned.
 
-[![Python](https://img.shields.io/badge/python-3.11+-blue)](#quick-start) [![tests](https://img.shields.io/badge/tests-163%20passed-brightgreen)](#testing) [![CI](https://github.com/tianyuantong/AgentStalker/actions/workflows/tests.yml/badge.svg)](https://github.com/tianyuantong/AgentStalker/actions/workflows/tests.yml) [![OWASP](https://img.shields.io/badge/OWASP-ASI01--ASI10-purple)](#) [![license](https://img.shields.io/badge/license-authorized%20use-orange)](#credits-and-license)
+[![Python](https://img.shields.io/badge/python-3.11+-blue)](#quick-start) [![tests](https://img.shields.io/badge/tests-168%20passed-brightgreen)](#testing) [![CI](https://github.com/tianyuantong/AgentStalker/actions/workflows/tests.yml/badge.svg)](https://github.com/tianyuantong/AgentStalker/actions/workflows/tests.yml) [![OWASP](https://img.shields.io/badge/OWASP-ASI01--ASI10-purple)](#) [![license](https://img.shields.io/badge/license-authorized%20use-orange)](#credits-and-license)
 
 [中文](README.zh.md) · [Design notes](docs/evidence-regression.md) · [Validation report](docs/validation-20260920.md) · [Review guide](docs/review-guide.zh.md) · [Upstream README](docs/upstream-README.md)
 
@@ -25,7 +25,7 @@ A verdict now has to be backed by an independently checked effect, complete exec
 - **Paired remediation regression.** Run the same 12-case suite against the vulnerable and the fixed target, then `compare`: 6/6 attack effects before → 0/6 after, 6/6 normal tasks passing on both sides, 3 → 0 credential leaks on public requests. Disabling the tool is caught as a functional regression, and a "fix" without a positive baseline cannot be claimed.
 - **Reproducible evidence bundles.** Every run writes a manifest with analyzer/collector/fixture fingerprints, environment, and a SHA-256 per record; outputs are exclusive-create, so a rerun never overwrites an experiment. `rejudge` re-analyzes a sealed bundle with provenance and never executes the target; `compare` refuses bundles that differ in suite, analyzer, collector, fixture, environment or declared fix.
 - **Hardened executors.** MCP stdio calls get a response deadline, a frame cap enforced while reading (2^20 characters per message) and guaranteed child cleanup; HTTP execution keeps one session across turns and propagates every failure; conversation replay finally implements its final assertion.
-- **163 tests, up from 76 upstream.** Most of the 87 new ones are negative or fault-injection cases: empty logs, dead collectors, incomplete windows, cross-run events, an LLM callback that tries to overwrite the verdict, corrupted bundles, path escapes, and a "disable everything" pseudo-fix.
+- **168 tests, up from 76 upstream.** Most of the 92 new ones are negative or fault-injection cases: empty logs, dead collectors, incomplete windows, cross-run events, an LLM callback that tries to overwrite the verdict, corrupted bundles, path escapes, a "disable everything" pseudo-fix, a credential moved to another header, the URL or the body, and an MCP frame that never ends.
 
 ## How a verdict is decided
 
@@ -132,12 +132,12 @@ python -m sandbox.regression rejudge output/before --output output/rejudged
 | MCP stdio executor | unbounded `readline()` | deadline, frame cap, child cleanup |
 | Multi-turn HTTP | session per `execute()`, failed turns reported as success | context carried across calls, every failure propagates |
 | Signal rules | R001–R011 (+5 runner heuristics) | R001–R016, documented in `verdict_rules.yaml`, drift-tested |
-| Tests | 76 | 163 |
+| Tests | 76 | 168 |
 
 ## Testing
 
 ```bash
-pytest tests -q -ra           # 163 tests, ~20 s, spawns real MCP subprocesses and a loopback receiver
+pytest tests -q -ra           # 168 tests, ~20 s, spawns real MCP subprocesses and a loopback receiver
 python -m build --wheel        # nested packages and the evidence schema ship in the wheel
 ```
 

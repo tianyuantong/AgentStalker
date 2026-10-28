@@ -7,10 +7,10 @@
   "layers": [],
   "events": [
     {
-      "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+      "run_id": "28b3e79e38cd4f699fe5b3e21d40bda0",
       "case_id": "proxy-one",
       "attempt_id": "1",
-      "session_id": "6386b521a0274bf89399e238d3e96a49",
+      "session_id": "4d1fa03a56d64150a8b7b556543c2c6e",
       "event_id": "tool-response",
       "source": "response",
       "layer": "mcp",
@@ -34,22 +34,45 @@
         },
         "tool": "proxy_request",
         "arguments": {
-          "url": "http://127.0.0.1:53473/private/6386b521a0274bf89399e238d3e96a49"
+          "url": "http://127.0.0.1:55037/private/4d1fa03a56d64150a8b7b556543c2c6e"
         }
       }
     },
     {
-      "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+      "run_id": "28b3e79e38cd4f699fe5b3e21d40bda0",
       "case_id": "proxy-one",
       "attempt_id": "1",
-      "session_id": "6386b521a0274bf89399e238d3e96a49",
+      "session_id": "4d1fa03a56d64150a8b7b556543c2c6e",
       "event_id": "receiver-snapshot",
       "source": "receiver",
       "data": {
         "requests": [
           {
-            "path": "/private/6386b521a0274bf89399e238d3e96a49",
-            "authorization": "synthetic-5f0718ca41f142b58bf401b0c5c51505"
+            "method": "GET",
+            "path": "/private/4d1fa03a56d64150a8b7b556543c2c6e",
+            "headers": [
+              [
+                "Accept-Encoding",
+                "identity"
+              ],
+              [
+                "Host",
+                "127.0.0.1:55037"
+              ],
+              [
+                "User-Agent",
+                "Python-urllib/3.13"
+              ],
+              [
+                "Authorization",
+                "synthetic-a680cdf395e0413c850d964b2c545222"
+              ],
+              [
+                "Connection",
+                "close"
+              ]
+            ],
+            "body": ""
           }
         ]
       }
@@ -75,16 +98,16 @@
   },
   "schema_version": 2,
   "context": {
-    "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+    "run_id": "28b3e79e38cd4f699fe5b3e21d40bda0",
     "case_id": "proxy-one",
     "attempt_id": "1",
-    "session_id": "6386b521a0274bf89399e238d3e96a49"
+    "session_id": "4d1fa03a56d64150a8b7b556543c2c6e"
   },
   "execution": {
     "status": "completed",
     "reset_status": "ok",
     "error": "",
-    "duration_ms": 249
+    "duration_ms": 215
   },
   "collection": {
     "response": {
@@ -110,7 +133,7 @@
       "kind": "impact",
       "type": "credential_received",
       "source": "receiver",
-      "expected": "synthetic-5f0718ca41f142b58bf401b0c5c51505"
+      "expected": "synthetic-a680cdf395e0413c850d964b2c545222"
     }
   ],
   "assertions": []

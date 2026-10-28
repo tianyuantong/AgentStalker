@@ -1,13 +1,13 @@
 {
   "operation": "rejudge_not_rerun",
-  "source_manifest_sha256": "da50bd024594364b3cd84927d1d8cab47754c9b43d433cd3f29b5b2ed71ed17f",
-  "source_analyzer": "acf8dc25b033f027ade9fb8ab421a309c2f860dcff3c94c4f00cd3e654eb4c9f",
+  "source_manifest_sha256": "7abdcba704c4271ae7f11ca00dea43d989a26d66587648a4c7411598bdf7f496",
+  "source_analyzer": "deef83f278f9438627e5967aa1b89026bcd67bb41011cdb312622507dc3ba99e",
   "current": {
-    "analyzer": "acf8dc25b033f027ade9fb8ab421a309c2f860dcff3c94c4f00cd3e654eb4c9f",
-    "collector": "a318f5846ce16a2f9c6a8668db147caa41f3faa88d4c52fa7069a710f633ad99"
+    "analyzer": "deef83f278f9438627e5967aa1b89026bcd67bb41011cdb312622507dc3ba99e",
+    "collector": "1143b10a8c165a3d51090785aadc6de8a7036225274567cd7520fb7878c3800b"
   },
   "audit_revision": {
-    "commit": "8684f1f4f37ccfc45e508e5ba636c43057a804bd",
+    "commit": "202e620edab358601559113048e771f06c61ccc7",
     "dirty": false
   }
 }
