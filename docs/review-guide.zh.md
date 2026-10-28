@@ -1,6 +1,6 @@
 # 人工审阅指南
 
-本文给审阅本 fork 改动的人一个入口：先看什么、每个结论的证据在哪、哪些兼容性变化需要重点确认。设计原案见 [design/plan-2026-09-20.zh.md](design/plan-2026-09-20.zh.md)，实现后的设计与兼容说明见 [evidence-regression.md](evidence-regression.md)。
+本文给审阅本 fork 改动的人一个入口：先看什么、每个结论的证据在哪、哪些兼容性变化需要重点确认。设计与兼容说明见 [evidence-regression.md](evidence-regression.md)。
 
 ## 建议阅读顺序
 
@@ -19,7 +19,7 @@
 
 ## 要求到证据映射
 
-| 原方案要求 | 实现/验证 |
+| 要求 | 实现/验证 |
 |---|---|
 | 统一两个判定入口 | `tests/test_evidence_decisions.py`；`tests/test_regression.py::test_shared_decision_entry` |
 | 失败/未执行/缺日志不判安全 | 判定用例与 `test_lost_collector_stays_unknown`；旧 collector 显式错误 envelope |
@@ -35,9 +35,8 @@
 | 多轮会话/执行状态修复 | `tests/test_execution_states.py` 的真实状态、会话、注入前置条件测试 |
 | schema、旧格式和安装兼容 | v2 schema 全记录校验；旧格式 unknown；外部环境 wheel 配对实验 |
 | 规则文档与代码一致 | `test_rule_documentation_matches_executable_rules` |
-| 真实模型验证 | 按方案独立可选层；本次未执行，README 和验证报告明确留空 |
-| 银行业务场景 | 按用户要求跳过 |
-| Rust 重写、概率校准、通用 OPA 加固 | 按方案留后续，不是本轮完成项 |
+| 真实模型验证 | 独立可选层，尚未执行；README 和验证报告明确留空 |
+| Rust 重写、概率校准、通用 OPA 加固 | 留作后续 |
 
 ## 兼容变化需要重点确认
 

@@ -4,7 +4,7 @@
 
 The baseline `7d5748e` has two independent decision paths. The legacy runner treats no matching signatures as safe; the correlation engine treats empty events as not exploitable and MCP name collisions as exploited. Collection failures can look like empty results. Conversation replay has an unimplemented final assertion and can report success after failure.
 
-This change uses one decision core and three new production modules: `contracts.py`, `assertions.py`, `regression.py`. It keeps existing analysis and execution entry points. No business application, new rule DSL, gateway, database or external service is added. The original Chinese design is preserved in [design/plan-2026-09-20.zh.md](design/plan-2026-09-20.zh.md).
+This change uses one decision core and three new production modules: `contracts.py`, `assertions.py`, `regression.py`. It keeps existing analysis and execution entry points. No business application, new rule DSL, gateway, database or external service is added.
 
 ## Data and trust boundary
 
