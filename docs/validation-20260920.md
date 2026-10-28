@@ -1,13 +1,13 @@
 # Validation — 2026-09-20
 
-Base: `7d5748e71163eefa473f0a23f460d6f8aa2556ae` (upstream HEAD). The saved bundles under `review/artifacts/` were generated from commit `8684f1f` of this branch with a clean tree (`audit_revision.dirty: false`); every manifest also fingerprints the analyzer, collector and fixture sources that actually ran, so `compare` refuses them once those files change.
+Base: `7d5748e71163eefa473f0a23f460d6f8aa2556ae` (upstream HEAD). The saved bundles under `review/artifacts/` were generated from commit `202e620` of this branch with a clean tree (`audit_revision.dirty: false`); every manifest also fingerprints the analyzer, collector and fixture sources that actually ran, so `compare` refuses them once those files change.
 
 ## Baseline and tests
 
 | Check | Observed result | Evidence |
 |---|---|---|
 | Original suite, original unconstrained dependencies | 73 passed, 3 failed | [Baseline output](../review/baseline-tests.txt), [environment](../review/baseline-environment.txt) |
-| Final full suite | 163 passed, 0 failed, 0 skipped | [Test output](../review/final-tests.txt), [JUnit](../review/final-tests.xml) |
+| Final full suite | 168 passed, 0 failed, 0 skipped | [Test output](../review/final-tests.txt), [JUnit](../review/final-tests.xml) |
 | Wheel build | Successful | [Build log](../review/build.txt) |
 | Fresh wheel installation outside checkout | Imports resolved to site-packages; 4-case paired suite (file and proxy attack plus their normal controls) passed from the installed package; pip check passed | [Install check](../review/install-check.txt) |
 | CLI negative gates | Still-vulnerable=1; no positive baseline=2; rejudge overwrite=2 | [Recorded exits](../review/negative-cli-checks.json) |
@@ -45,6 +45,6 @@ The two manifests contain 24 verified raw records and 24 corresponding judged re
 
 File cases exercise direct sibling-directory access, `..` and a symbolic-link escape. Normal controls read ordinary, similarly named and nested allowed files. Proxy cases demonstrate actual synthetic Authorization receipt at an unauthorized endpoint and subsequent absence after repair; public proxy responses remain correct. A separate automated test verifies that disabling all tools fails functional-regression checks.
 
-Additional tests cover scoped event isolation, failed/missing collectors, incomplete windows, refusal-plus-effect, timeout-plus-effect, unknown assertions, legacy records and legacy-runner signals (R012–R016), rule-documentation drift, LLM advisory boundaries, damaged bundles, changed settings, incomplete inventories, repeated outputs, attack groups without a planned control, portable report paths, actual MCP child exit/deadline handling, Windows-safe command splitting, execution status on every executor and multi-turn session continuity.
+Additional tests cover scoped event isolation, failed/missing collectors, incomplete windows, refusal-plus-effect, timeout-plus-effect, unknown assertions, legacy records and legacy-runner signals (R012–R016), rule-documentation drift, LLM advisory boundaries, damaged bundles, changed settings, incomplete inventories, repeated outputs, attack groups without a planned control, portable report paths, actual MCP child exit/deadline handling, a credential moved to another header, the URL or the body, an MCP frame that never ends, Windows-safe command splitting, execution status on every executor and multi-turn session continuity.
 
 These results prove the listed local invariants and tool-boundary experiments. They do not measure real-model prompt-injection resistance, general vulnerability detection accuracy, CodeWhale exploitability, full eBPF/Docker integration, arbitrary OAuth behavior or race-resistant filesystem security. The original broad static audit remains a risk-discovery layer. Legacy unscoped collectors remain explicitly inconclusive.

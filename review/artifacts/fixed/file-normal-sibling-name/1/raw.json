@@ -7,10 +7,10 @@
   "layers": [],
   "events": [
     {
-      "run_id": "9e9c1ad90cb84922bf046ab9395a4394",
+      "run_id": "1789927d2b6044f2ad024ec0b2178482",
       "case_id": "file-normal-sibling-name",
       "attempt_id": "1",
-      "session_id": "6a91b1c535584c8fbee8af59e888ec9d",
+      "session_id": "5a1436fc72924ea1b533709eca86ac63",
       "event_id": "tool-response",
       "source": "response",
       "layer": "mcp",
@@ -34,7 +34,7 @@
         },
         "tool": "read_file",
         "arguments": {
-          "path": "/var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-case-783qfvpq/allowed/allowed-sibling-name.txt"
+          "path": "/var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-case-k0_tjs_8/allowed/allowed-sibling-name.txt"
         }
       }
     }
@@ -59,16 +59,16 @@
   },
   "schema_version": 2,
   "context": {
-    "run_id": "9e9c1ad90cb84922bf046ab9395a4394",
+    "run_id": "1789927d2b6044f2ad024ec0b2178482",
     "case_id": "file-normal-sibling-name",
     "attempt_id": "1",
-    "session_id": "6a91b1c535584c8fbee8af59e888ec9d"
+    "session_id": "5a1436fc72924ea1b533709eca86ac63"
   },
   "execution": {
     "status": "completed",
     "reset_status": "ok",
     "error": "",
-    "duration_ms": 266
+    "duration_ms": 204
   },
   "collection": {
     "response": {

@@ -7,10 +7,10 @@
   "layers": [],
   "events": [
     {
-      "run_id": "9e9c1ad90cb84922bf046ab9395a4394",
+      "run_id": "1789927d2b6044f2ad024ec0b2178482",
       "case_id": "file-parent",
       "attempt_id": "1",
-      "session_id": "4eef02ca325640a488e8d21b1818855a",
+      "session_id": "e4fae1aba54841c381130a8787fbf51f",
       "event_id": "tool-response",
       "source": "response",
       "layer": "mcp",
@@ -34,7 +34,7 @@
         },
         "tool": "read_file",
         "arguments": {
-          "path": "/var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-case-_ksk3_vb/allowed/../allowed-sibling/secret.txt"
+          "path": "/var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-case-6v4dm5cc/allowed/../allowed-sibling/secret.txt"
         }
       }
     }
@@ -64,16 +64,16 @@
   },
   "schema_version": 2,
   "context": {
-    "run_id": "9e9c1ad90cb84922bf046ab9395a4394",
+    "run_id": "1789927d2b6044f2ad024ec0b2178482",
     "case_id": "file-parent",
     "attempt_id": "1",
-    "session_id": "4eef02ca325640a488e8d21b1818855a"
+    "session_id": "e4fae1aba54841c381130a8787fbf51f"
   },
   "execution": {
     "status": "completed",
     "reset_status": "ok",
     "error": "",
-    "duration_ms": 230
+    "duration_ms": 207
   },
   "collection": {
     "response": {
@@ -93,7 +93,7 @@
       "kind": "impact",
       "type": "protected_marker_returned",
       "source": "response",
-      "expected": "protected-d77c53824691482886d1922e379b4f9d"
+      "expected": "protected-3b712f4c98ef462ea0d5c5a7e3657125"
     }
   ],
   "assertions": [

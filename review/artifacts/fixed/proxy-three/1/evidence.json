@@ -7,10 +7,10 @@
   "layers": [],
   "events": [
     {
-      "run_id": "9e9c1ad90cb84922bf046ab9395a4394",
+      "run_id": "1789927d2b6044f2ad024ec0b2178482",
       "case_id": "proxy-three",
       "attempt_id": "1",
-      "session_id": "bc0c2a1e90b04f5a820a9b445e8c664e",
+      "session_id": "a4b80b5dbd2e464cb90e60800f1e109d",
       "event_id": "tool-response",
       "source": "response",
       "layer": "mcp",
@@ -34,15 +34,15 @@
         },
         "tool": "proxy_request",
         "arguments": {
-          "url": "http://127.0.0.1:53495/private/bc0c2a1e90b04f5a820a9b445e8c664e"
+          "url": "http://127.0.0.1:55060/private/a4b80b5dbd2e464cb90e60800f1e109d"
         }
       }
     },
     {
-      "run_id": "9e9c1ad90cb84922bf046ab9395a4394",
+      "run_id": "1789927d2b6044f2ad024ec0b2178482",
       "case_id": "proxy-three",
       "attempt_id": "1",
-      "session_id": "bc0c2a1e90b04f5a820a9b445e8c664e",
+      "session_id": "a4b80b5dbd2e464cb90e60800f1e109d",
       "event_id": "receiver-snapshot",
       "source": "receiver",
       "data": {
@@ -75,16 +75,16 @@
   },
   "schema_version": 2,
   "context": {
-    "run_id": "9e9c1ad90cb84922bf046ab9395a4394",
+    "run_id": "1789927d2b6044f2ad024ec0b2178482",
     "case_id": "proxy-three",
     "attempt_id": "1",
-    "session_id": "bc0c2a1e90b04f5a820a9b445e8c664e"
+    "session_id": "a4b80b5dbd2e464cb90e60800f1e109d"
   },
   "execution": {
     "status": "completed",
     "reset_status": "ok",
     "error": "",
-    "duration_ms": 246
+    "duration_ms": 200
   },
   "collection": {
     "response": {
@@ -110,7 +110,7 @@
       "kind": "impact",
       "type": "credential_received",
       "source": "receiver",
-      "expected": "synthetic-97bd595909d1415d8b8e0c3fdf71e786"
+      "expected": "synthetic-5a55a888997f4b619a1c78f1ec8b3632"
     }
   ],
   "assertions": [

@@ -7,15 +7,15 @@
   "layers": [],
   "events": [
     {
-      "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+      "run_id": "28b3e79e38cd4f699fe5b3e21d40bda0",
       "case_id": "file-symlink",
       "attempt_id": "1",
-      "session_id": "2d228bc364104c04b4e0fdadbc7bbb1f",
+      "session_id": "5a2f0ebca5d641e9b896f78d86a59f64",
       "event_id": "tool-response",
       "source": "response",
       "layer": "mcp",
       "data": {
-        "text": "protected-6f406d4526844ae4a8d9f5ca0f200a61",
+        "text": "protected-9d9e44ce8e324ab9ad99f231e2bdd17c",
         "rpc": {
           "jsonrpc": "2.0",
           "id": 101,
@@ -23,18 +23,18 @@
             "content": [
               {
                 "type": "text",
-                "text": "protected-6f406d4526844ae4a8d9f5ca0f200a61"
+                "text": "protected-9d9e44ce8e324ab9ad99f231e2bdd17c"
               }
             ],
             "structuredContent": {
-              "result": "protected-6f406d4526844ae4a8d9f5ca0f200a61"
+              "result": "protected-9d9e44ce8e324ab9ad99f231e2bdd17c"
             },
             "isError": false
           }
         },
         "tool": "read_file",
         "arguments": {
-          "path": "/var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-case-tx0r9f5r/allowed/link.txt"
+          "path": "/var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-case-8i50gxkr/allowed/link.txt"
         }
       }
     }
@@ -59,16 +59,16 @@
   },
   "schema_version": 2,
   "context": {
-    "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+    "run_id": "28b3e79e38cd4f699fe5b3e21d40bda0",
     "case_id": "file-symlink",
     "attempt_id": "1",
-    "session_id": "2d228bc364104c04b4e0fdadbc7bbb1f"
+    "session_id": "5a2f0ebca5d641e9b896f78d86a59f64"
   },
   "execution": {
     "status": "completed",
     "reset_status": "ok",
     "error": "",
-    "duration_ms": 233
+    "duration_ms": 205
   },
   "collection": {
     "response": {
@@ -88,7 +88,7 @@
       "kind": "impact",
       "type": "protected_marker_returned",
       "source": "response",
-      "expected": "protected-6f406d4526844ae4a8d9f5ca0f200a61"
+      "expected": "protected-9d9e44ce8e324ab9ad99f231e2bdd17c"
     }
   ],
   "assertions": []

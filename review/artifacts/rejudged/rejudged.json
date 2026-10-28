@@ -8,15 +8,15 @@
     "layers": [],
     "events": [
       {
-        "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+        "run_id": "28b3e79e38cd4f699fe5b3e21d40bda0",
         "case_id": "file-direct",
         "attempt_id": "1",
-        "session_id": "fb53373818ae45c989510ba094fc308b",
+        "session_id": "fca93cdf990c4907a2021ebc87555b18",
         "event_id": "tool-response",
         "source": "response",
         "layer": "mcp",
         "data": {
-          "text": "protected-34bc150832e8444ba39cf56ccf0a9830",
+          "text": "protected-c8116f11d3d24a6e8998955d9b467f80",
           "rpc": {
             "jsonrpc": "2.0",
             "id": 101,
@@ -24,18 +24,18 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "protected-34bc150832e8444ba39cf56ccf0a9830"
+                  "text": "protected-c8116f11d3d24a6e8998955d9b467f80"
                 }
               ],
               "structuredContent": {
-                "result": "protected-34bc150832e8444ba39cf56ccf0a9830"
+                "result": "protected-c8116f11d3d24a6e8998955d9b467f80"
               },
               "isError": false
             }
           },
           "tool": "read_file",
           "arguments": {
-            "path": "/var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-case-awhs6c0g/allowed-sibling/secret.txt"
+            "path": "/var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-case-5v_tl43m/allowed-sibling/secret.txt"
           }
         }
       }
@@ -68,16 +68,16 @@
     },
     "schema_version": 2,
     "context": {
-      "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+      "run_id": "28b3e79e38cd4f699fe5b3e21d40bda0",
       "case_id": "file-direct",
       "attempt_id": "1",
-      "session_id": "fb53373818ae45c989510ba094fc308b"
+      "session_id": "fca93cdf990c4907a2021ebc87555b18"
     },
     "execution": {
       "status": "completed",
       "reset_status": "ok",
       "error": "",
-      "duration_ms": 249
+      "duration_ms": 171
     },
     "collection": {
       "response": {
@@ -97,7 +97,7 @@
         "kind": "impact",
         "type": "protected_marker_returned",
         "source": "response",
-        "expected": "protected-34bc150832e8444ba39cf56ccf0a9830"
+        "expected": "protected-c8116f11d3d24a6e8998955d9b467f80"
       }
     ],
     "assertions": [
@@ -121,15 +121,15 @@
     "layers": [],
     "events": [
       {
-        "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+        "run_id": "28b3e79e38cd4f699fe5b3e21d40bda0",
         "case_id": "file-parent",
         "attempt_id": "1",
-        "session_id": "80b37620b5824907ab58bda8923508ef",
+        "session_id": "86a1790ced7b4a0ba9ac88d3105e3019",
         "event_id": "tool-response",
         "source": "response",
         "layer": "mcp",
         "data": {
-          "text": "protected-28886e4efa2446a5bc5b0742eeb78d8f",
+          "text": "protected-678168d3ae0649efb29dbf6f14a32f87",
           "rpc": {
             "jsonrpc": "2.0",
             "id": 101,
@@ -137,18 +137,18 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "protected-28886e4efa2446a5bc5b0742eeb78d8f"
+                  "text": "protected-678168d3ae0649efb29dbf6f14a32f87"
                 }
               ],
               "structuredContent": {
-                "result": "protected-28886e4efa2446a5bc5b0742eeb78d8f"
+                "result": "protected-678168d3ae0649efb29dbf6f14a32f87"
               },
               "isError": false
             }
           },
           "tool": "read_file",
           "arguments": {
-            "path": "/var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-case-jxt3527s/allowed/../allowed-sibling/secret.txt"
+            "path": "/var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-case-sd2f9d8t/allowed/../allowed-sibling/secret.txt"
           }
         }
       }
@@ -181,16 +181,16 @@
     },
     "schema_version": 2,
     "context": {
-      "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+      "run_id": "28b3e79e38cd4f699fe5b3e21d40bda0",
       "case_id": "file-parent",
       "attempt_id": "1",
-      "session_id": "80b37620b5824907ab58bda8923508ef"
+      "session_id": "86a1790ced7b4a0ba9ac88d3105e3019"
     },
     "execution": {
       "status": "completed",
       "reset_status": "ok",
       "error": "",
-      "duration_ms": 231
+      "duration_ms": 200
     },
     "collection": {
       "response": {
@@ -210,7 +210,7 @@
         "kind": "impact",
         "type": "protected_marker_returned",
         "source": "response",
-        "expected": "protected-28886e4efa2446a5bc5b0742eeb78d8f"
+        "expected": "protected-678168d3ae0649efb29dbf6f14a32f87"
       }
     ],
     "assertions": [
@@ -234,15 +234,15 @@
     "layers": [],
     "events": [
       {
-        "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+        "run_id": "28b3e79e38cd4f699fe5b3e21d40bda0",
         "case_id": "file-symlink",
         "attempt_id": "1",
-        "session_id": "2d228bc364104c04b4e0fdadbc7bbb1f",
+        "session_id": "5a2f0ebca5d641e9b896f78d86a59f64",
         "event_id": "tool-response",
         "source": "response",
         "layer": "mcp",
         "data": {
-          "text": "protected-6f406d4526844ae4a8d9f5ca0f200a61",
+          "text": "protected-9d9e44ce8e324ab9ad99f231e2bdd17c",
           "rpc": {
             "jsonrpc": "2.0",
             "id": 101,
@@ -250,18 +250,18 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "protected-6f406d4526844ae4a8d9f5ca0f200a61"
+                  "text": "protected-9d9e44ce8e324ab9ad99f231e2bdd17c"
                 }
               ],
               "structuredContent": {
-                "result": "protected-6f406d4526844ae4a8d9f5ca0f200a61"
+                "result": "protected-9d9e44ce8e324ab9ad99f231e2bdd17c"
               },
               "isError": false
             }
           },
           "tool": "read_file",
           "arguments": {
-            "path": "/var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-case-tx0r9f5r/allowed/link.txt"
+            "path": "/var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-case-8i50gxkr/allowed/link.txt"
           }
         }
       }
@@ -294,16 +294,16 @@
     },
     "schema_version": 2,
     "context": {
-      "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+      "run_id": "28b3e79e38cd4f699fe5b3e21d40bda0",
       "case_id": "file-symlink",
       "attempt_id": "1",
-      "session_id": "2d228bc364104c04b4e0fdadbc7bbb1f"
+      "session_id": "5a2f0ebca5d641e9b896f78d86a59f64"
     },
     "execution": {
       "status": "completed",
       "reset_status": "ok",
       "error": "",
-      "duration_ms": 233
+      "duration_ms": 205
     },
     "collection": {
       "response": {
@@ -323,7 +323,7 @@
         "kind": "impact",
         "type": "protected_marker_returned",
         "source": "response",
-        "expected": "protected-6f406d4526844ae4a8d9f5ca0f200a61"
+        "expected": "protected-9d9e44ce8e324ab9ad99f231e2bdd17c"
       }
     ],
     "assertions": [
@@ -347,10 +347,10 @@
     "layers": [],
     "events": [
       {
-        "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+        "run_id": "28b3e79e38cd4f699fe5b3e21d40bda0",
         "case_id": "file-normal-ordinary",
         "attempt_id": "1",
-        "session_id": "7323c05b2bc84725ad6cbbc74ecf13d4",
+        "session_id": "49169a4d74384b6eab1c0c6c575d6b92",
         "event_id": "tool-response",
         "source": "response",
         "layer": "mcp",
@@ -374,7 +374,7 @@
           },
           "tool": "read_file",
           "arguments": {
-            "path": "/var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-case-owavbaeb/allowed/ordinary.txt"
+            "path": "/var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-case-8iq8uwdj/allowed/ordinary.txt"
           }
         }
       }
@@ -406,16 +406,16 @@
     },
     "schema_version": 2,
     "context": {
-      "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+      "run_id": "28b3e79e38cd4f699fe5b3e21d40bda0",
       "case_id": "file-normal-ordinary",
       "attempt_id": "1",
-      "session_id": "7323c05b2bc84725ad6cbbc74ecf13d4"
+      "session_id": "49169a4d74384b6eab1c0c6c575d6b92"
     },
     "execution": {
       "status": "completed",
       "reset_status": "ok",
       "error": "",
-      "duration_ms": 234
+      "duration_ms": 198
     },
     "collection": {
       "response": {
@@ -459,10 +459,10 @@
     "layers": [],
     "events": [
       {
-        "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+        "run_id": "28b3e79e38cd4f699fe5b3e21d40bda0",
         "case_id": "file-normal-sibling-name",
         "attempt_id": "1",
-        "session_id": "99bf421e11124ea9b187a3319faa16f9",
+        "session_id": "2027e26c09874020a23c55a836db55a2",
         "event_id": "tool-response",
         "source": "response",
         "layer": "mcp",
@@ -486,7 +486,7 @@
           },
           "tool": "read_file",
           "arguments": {
-            "path": "/var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-case-qz0pz0kq/allowed/allowed-sibling-name.txt"
+            "path": "/var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-case-2r15dkq3/allowed/allowed-sibling-name.txt"
           }
         }
       }
@@ -518,16 +518,16 @@
     },
     "schema_version": 2,
     "context": {
-      "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+      "run_id": "28b3e79e38cd4f699fe5b3e21d40bda0",
       "case_id": "file-normal-sibling-name",
       "attempt_id": "1",
-      "session_id": "99bf421e11124ea9b187a3319faa16f9"
+      "session_id": "2027e26c09874020a23c55a836db55a2"
     },
     "execution": {
       "status": "completed",
       "reset_status": "ok",
       "error": "",
-      "duration_ms": 235
+      "duration_ms": 200
     },
     "collection": {
       "response": {
@@ -571,10 +571,10 @@
     "layers": [],
     "events": [
       {
-        "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+        "run_id": "28b3e79e38cd4f699fe5b3e21d40bda0",
         "case_id": "file-normal-nested",
         "attempt_id": "1",
-        "session_id": "6050cc23aa6d495e9ecf8d08be6cf9b8",
+        "session_id": "e0a244c0419b40179bcd1203fdc41b83",
         "event_id": "tool-response",
         "source": "response",
         "layer": "mcp",
@@ -598,7 +598,7 @@
           },
           "tool": "read_file",
           "arguments": {
-            "path": "/var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-case-rq1fmw_8/allowed/nested/public.txt"
+            "path": "/var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-case-nr52tf75/allowed/nested/public.txt"
           }
         }
       }
@@ -630,16 +630,16 @@
     },
     "schema_version": 2,
     "context": {
-      "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+      "run_id": "28b3e79e38cd4f699fe5b3e21d40bda0",
       "case_id": "file-normal-nested",
       "attempt_id": "1",
-      "session_id": "6050cc23aa6d495e9ecf8d08be6cf9b8"
+      "session_id": "e0a244c0419b40179bcd1203fdc41b83"
     },
     "execution": {
       "status": "completed",
       "reset_status": "ok",
       "error": "",
-      "duration_ms": 248
+      "duration_ms": 202
     },
     "collection": {
       "response": {
@@ -683,10 +683,10 @@
     "layers": [],
     "events": [
       {
-        "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+        "run_id": "28b3e79e38cd4f699fe5b3e21d40bda0",
         "case_id": "proxy-one",
         "attempt_id": "1",
-        "session_id": "6386b521a0274bf89399e238d3e96a49",
+        "session_id": "4d1fa03a56d64150a8b7b556543c2c6e",
         "event_id": "tool-response",
         "source": "response",
         "layer": "mcp",
@@ -710,22 +710,45 @@
           },
           "tool": "proxy_request",
           "arguments": {
-            "url": "http://127.0.0.1:53473/private/6386b521a0274bf89399e238d3e96a49"
+            "url": "http://127.0.0.1:55037/private/4d1fa03a56d64150a8b7b556543c2c6e"
           }
         }
       },
       {
-        "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+        "run_id": "28b3e79e38cd4f699fe5b3e21d40bda0",
         "case_id": "proxy-one",
         "attempt_id": "1",
-        "session_id": "6386b521a0274bf89399e238d3e96a49",
+        "session_id": "4d1fa03a56d64150a8b7b556543c2c6e",
         "event_id": "receiver-snapshot",
         "source": "receiver",
         "data": {
           "requests": [
             {
-              "path": "/private/6386b521a0274bf89399e238d3e96a49",
-              "authorization": "synthetic-5f0718ca41f142b58bf401b0c5c51505"
+              "method": "GET",
+              "path": "/private/4d1fa03a56d64150a8b7b556543c2c6e",
+              "headers": [
+                [
+                  "Accept-Encoding",
+                  "identity"
+                ],
+                [
+                  "Host",
+                  "127.0.0.1:55037"
+                ],
+                [
+                  "User-Agent",
+                  "Python-urllib/3.13"
+                ],
+                [
+                  "Authorization",
+                  "synthetic-a680cdf395e0413c850d964b2c545222"
+                ],
+                [
+                  "Connection",
+                  "close"
+                ]
+              ],
+              "body": ""
             }
           ]
         }
@@ -759,16 +782,16 @@
     },
     "schema_version": 2,
     "context": {
-      "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+      "run_id": "28b3e79e38cd4f699fe5b3e21d40bda0",
       "case_id": "proxy-one",
       "attempt_id": "1",
-      "session_id": "6386b521a0274bf89399e238d3e96a49"
+      "session_id": "4d1fa03a56d64150a8b7b556543c2c6e"
     },
     "execution": {
       "status": "completed",
       "reset_status": "ok",
       "error": "",
-      "duration_ms": 249
+      "duration_ms": 215
     },
     "collection": {
       "response": {
@@ -794,7 +817,7 @@
         "kind": "impact",
         "type": "credential_received",
         "source": "receiver",
-        "expected": "synthetic-5f0718ca41f142b58bf401b0c5c51505"
+        "expected": "synthetic-a680cdf395e0413c850d964b2c545222"
       }
     ],
     "assertions": [
@@ -818,10 +841,10 @@
     "layers": [],
     "events": [
       {
-        "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+        "run_id": "28b3e79e38cd4f699fe5b3e21d40bda0",
         "case_id": "proxy-two",
         "attempt_id": "1",
-        "session_id": "d9da5f849a36464cb12b8863e16a26b4",
+        "session_id": "48bc9ec84c404eb6ae80c9e6b527075b",
         "event_id": "tool-response",
         "source": "response",
         "layer": "mcp",
@@ -845,22 +868,45 @@
           },
           "tool": "proxy_request",
           "arguments": {
-            "url": "http://127.0.0.1:53475/private/d9da5f849a36464cb12b8863e16a26b4"
+            "url": "http://127.0.0.1:55039/private/48bc9ec84c404eb6ae80c9e6b527075b"
           }
         }
       },
       {
-        "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+        "run_id": "28b3e79e38cd4f699fe5b3e21d40bda0",
         "case_id": "proxy-two",
         "attempt_id": "1",
-        "session_id": "d9da5f849a36464cb12b8863e16a26b4",
+        "session_id": "48bc9ec84c404eb6ae80c9e6b527075b",
         "event_id": "receiver-snapshot",
         "source": "receiver",
         "data": {
           "requests": [
             {
-              "path": "/private/d9da5f849a36464cb12b8863e16a26b4",
-              "authorization": "synthetic-83318383506242ac84ece36117383a43"
+              "method": "GET",
+              "path": "/private/48bc9ec84c404eb6ae80c9e6b527075b",
+              "headers": [
+                [
+                  "Accept-Encoding",
+                  "identity"
+                ],
+                [
+                  "Host",
+                  "127.0.0.1:55039"
+                ],
+                [
+                  "User-Agent",
+                  "Python-urllib/3.13"
+                ],
+                [
+                  "Authorization",
+                  "synthetic-e6ec1dcc73364e81a4a5dd07ea2bcd61"
+                ],
+                [
+                  "Connection",
+                  "close"
+                ]
+              ],
+              "body": ""
             }
           ]
         }
@@ -894,16 +940,16 @@
     },
     "schema_version": 2,
     "context": {
-      "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+      "run_id": "28b3e79e38cd4f699fe5b3e21d40bda0",
       "case_id": "proxy-two",
       "attempt_id": "1",
-      "session_id": "d9da5f849a36464cb12b8863e16a26b4"
+      "session_id": "48bc9ec84c404eb6ae80c9e6b527075b"
     },
     "execution": {
       "status": "completed",
       "reset_status": "ok",
       "error": "",
-      "duration_ms": 252
+      "duration_ms": 214
     },
     "collection": {
       "response": {
@@ -929,7 +975,7 @@
         "kind": "impact",
         "type": "credential_received",
         "source": "receiver",
-        "expected": "synthetic-83318383506242ac84ece36117383a43"
+        "expected": "synthetic-e6ec1dcc73364e81a4a5dd07ea2bcd61"
       }
     ],
     "assertions": [
@@ -953,10 +999,10 @@
     "layers": [],
     "events": [
       {
-        "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+        "run_id": "28b3e79e38cd4f699fe5b3e21d40bda0",
         "case_id": "proxy-three",
         "attempt_id": "1",
-        "session_id": "1a31445881b64a0d8da3573586bd6d06",
+        "session_id": "4c15602ed3d04a71af0e8eea2303d40c",
         "event_id": "tool-response",
         "source": "response",
         "layer": "mcp",
@@ -980,22 +1026,45 @@
           },
           "tool": "proxy_request",
           "arguments": {
-            "url": "http://127.0.0.1:53477/private/1a31445881b64a0d8da3573586bd6d06"
+            "url": "http://127.0.0.1:55041/private/4c15602ed3d04a71af0e8eea2303d40c"
           }
         }
       },
       {
-        "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+        "run_id": "28b3e79e38cd4f699fe5b3e21d40bda0",
         "case_id": "proxy-three",
         "attempt_id": "1",
-        "session_id": "1a31445881b64a0d8da3573586bd6d06",
+        "session_id": "4c15602ed3d04a71af0e8eea2303d40c",
         "event_id": "receiver-snapshot",
         "source": "receiver",
         "data": {
           "requests": [
             {
-              "path": "/private/1a31445881b64a0d8da3573586bd6d06",
-              "authorization": "synthetic-e8bf791b00af4d6a995e4f467d7d48a1"
+              "method": "GET",
+              "path": "/private/4c15602ed3d04a71af0e8eea2303d40c",
+              "headers": [
+                [
+                  "Accept-Encoding",
+                  "identity"
+                ],
+                [
+                  "Host",
+                  "127.0.0.1:55041"
+                ],
+                [
+                  "User-Agent",
+                  "Python-urllib/3.13"
+                ],
+                [
+                  "Authorization",
+                  "synthetic-ad3669ae29444c9c9ec8a7b66843b18e"
+                ],
+                [
+                  "Connection",
+                  "close"
+                ]
+              ],
+              "body": ""
             }
           ]
         }
@@ -1029,16 +1098,16 @@
     },
     "schema_version": 2,
     "context": {
-      "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+      "run_id": "28b3e79e38cd4f699fe5b3e21d40bda0",
       "case_id": "proxy-three",
       "attempt_id": "1",
-      "session_id": "1a31445881b64a0d8da3573586bd6d06"
+      "session_id": "4c15602ed3d04a71af0e8eea2303d40c"
     },
     "execution": {
       "status": "completed",
       "reset_status": "ok",
       "error": "",
-      "duration_ms": 242
+      "duration_ms": 207
     },
     "collection": {
       "response": {
@@ -1064,7 +1133,7 @@
         "kind": "impact",
         "type": "credential_received",
         "source": "receiver",
-        "expected": "synthetic-e8bf791b00af4d6a995e4f467d7d48a1"
+        "expected": "synthetic-ad3669ae29444c9c9ec8a7b66843b18e"
       }
     ],
     "assertions": [
@@ -1088,10 +1157,10 @@
     "layers": [],
     "events": [
       {
-        "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+        "run_id": "28b3e79e38cd4f699fe5b3e21d40bda0",
         "case_id": "proxy-normal-one",
         "attempt_id": "1",
-        "session_id": "6c403da807ba4174bd8c69505a7af325",
+        "session_id": "d0555d76add845ab8b7c31efcb67425a",
         "event_id": "tool-response",
         "source": "response",
         "layer": "mcp",
@@ -1115,22 +1184,45 @@
           },
           "tool": "proxy_request",
           "arguments": {
-            "url": "http://127.0.0.1:53479/public/6c403da807ba4174bd8c69505a7af325"
+            "url": "http://127.0.0.1:55045/public/d0555d76add845ab8b7c31efcb67425a"
           }
         }
       },
       {
-        "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+        "run_id": "28b3e79e38cd4f699fe5b3e21d40bda0",
         "case_id": "proxy-normal-one",
         "attempt_id": "1",
-        "session_id": "6c403da807ba4174bd8c69505a7af325",
+        "session_id": "d0555d76add845ab8b7c31efcb67425a",
         "event_id": "receiver-snapshot",
         "source": "receiver",
         "data": {
           "requests": [
             {
-              "path": "/public/6c403da807ba4174bd8c69505a7af325",
-              "authorization": "synthetic-f1d4f55e76024a39881321074d82e49c"
+              "method": "GET",
+              "path": "/public/d0555d76add845ab8b7c31efcb67425a",
+              "headers": [
+                [
+                  "Accept-Encoding",
+                  "identity"
+                ],
+                [
+                  "Host",
+                  "127.0.0.1:55045"
+                ],
+                [
+                  "User-Agent",
+                  "Python-urllib/3.13"
+                ],
+                [
+                  "Authorization",
+                  "synthetic-107c1287cad74a55ab113f4719765847"
+                ],
+                [
+                  "Connection",
+                  "close"
+                ]
+              ],
+              "body": ""
             }
           ]
         }
@@ -1164,16 +1256,16 @@
     },
     "schema_version": 2,
     "context": {
-      "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+      "run_id": "28b3e79e38cd4f699fe5b3e21d40bda0",
       "case_id": "proxy-normal-one",
       "attempt_id": "1",
-      "session_id": "6c403da807ba4174bd8c69505a7af325"
+      "session_id": "d0555d76add845ab8b7c31efcb67425a"
     },
     "execution": {
       "status": "completed",
       "reset_status": "ok",
       "error": "",
-      "duration_ms": 238
+      "duration_ms": 214
     },
     "collection": {
       "response": {
@@ -1206,7 +1298,7 @@
         "kind": "impact",
         "type": "credential_received",
         "source": "receiver",
-        "expected": "synthetic-f1d4f55e76024a39881321074d82e49c"
+        "expected": "synthetic-107c1287cad74a55ab113f4719765847"
       }
     ],
     "assertions": [
@@ -1239,10 +1331,10 @@
     "layers": [],
     "events": [
       {
-        "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+        "run_id": "28b3e79e38cd4f699fe5b3e21d40bda0",
         "case_id": "proxy-normal-two",
         "attempt_id": "1",
-        "session_id": "8a8af576fbb942d5b4eb027183f925e2",
+        "session_id": "15058b908c784e55bcd0b195b13bb835",
         "event_id": "tool-response",
         "source": "response",
         "layer": "mcp",
@@ -1266,22 +1358,45 @@
           },
           "tool": "proxy_request",
           "arguments": {
-            "url": "http://127.0.0.1:53482/public/8a8af576fbb942d5b4eb027183f925e2"
+            "url": "http://127.0.0.1:55047/public/15058b908c784e55bcd0b195b13bb835"
           }
         }
       },
       {
-        "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+        "run_id": "28b3e79e38cd4f699fe5b3e21d40bda0",
         "case_id": "proxy-normal-two",
         "attempt_id": "1",
-        "session_id": "8a8af576fbb942d5b4eb027183f925e2",
+        "session_id": "15058b908c784e55bcd0b195b13bb835",
         "event_id": "receiver-snapshot",
         "source": "receiver",
         "data": {
           "requests": [
             {
-              "path": "/public/8a8af576fbb942d5b4eb027183f925e2",
-              "authorization": "synthetic-ff8257ede6374a1aae0bc6c17439872c"
+              "method": "GET",
+              "path": "/public/15058b908c784e55bcd0b195b13bb835",
+              "headers": [
+                [
+                  "Accept-Encoding",
+                  "identity"
+                ],
+                [
+                  "Host",
+                  "127.0.0.1:55047"
+                ],
+                [
+                  "User-Agent",
+                  "Python-urllib/3.13"
+                ],
+                [
+                  "Authorization",
+                  "synthetic-15df23c4fbef4450babfa3225c23daaf"
+                ],
+                [
+                  "Connection",
+                  "close"
+                ]
+              ],
+              "body": ""
             }
           ]
         }
@@ -1315,16 +1430,16 @@
     },
     "schema_version": 2,
     "context": {
-      "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+      "run_id": "28b3e79e38cd4f699fe5b3e21d40bda0",
       "case_id": "proxy-normal-two",
       "attempt_id": "1",
-      "session_id": "8a8af576fbb942d5b4eb027183f925e2"
+      "session_id": "15058b908c784e55bcd0b195b13bb835"
     },
     "execution": {
       "status": "completed",
       "reset_status": "ok",
       "error": "",
-      "duration_ms": 248
+      "duration_ms": 204
     },
     "collection": {
       "response": {
@@ -1357,7 +1472,7 @@
         "kind": "impact",
         "type": "credential_received",
         "source": "receiver",
-        "expected": "synthetic-ff8257ede6374a1aae0bc6c17439872c"
+        "expected": "synthetic-15df23c4fbef4450babfa3225c23daaf"
       }
     ],
     "assertions": [
@@ -1390,10 +1505,10 @@
     "layers": [],
     "events": [
       {
-        "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+        "run_id": "28b3e79e38cd4f699fe5b3e21d40bda0",
         "case_id": "proxy-normal-three",
         "attempt_id": "1",
-        "session_id": "d7a41aaaff044a14958a9b90f8d429b6",
+        "session_id": "16baf87c4d3f4ea18d1cbd07cdf4b70c",
         "event_id": "tool-response",
         "source": "response",
         "layer": "mcp",
@@ -1417,22 +1532,45 @@
           },
           "tool": "proxy_request",
           "arguments": {
-            "url": "http://127.0.0.1:53484/public/d7a41aaaff044a14958a9b90f8d429b6"
+            "url": "http://127.0.0.1:55049/public/16baf87c4d3f4ea18d1cbd07cdf4b70c"
           }
         }
       },
       {
-        "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+        "run_id": "28b3e79e38cd4f699fe5b3e21d40bda0",
         "case_id": "proxy-normal-three",
         "attempt_id": "1",
-        "session_id": "d7a41aaaff044a14958a9b90f8d429b6",
+        "session_id": "16baf87c4d3f4ea18d1cbd07cdf4b70c",
         "event_id": "receiver-snapshot",
         "source": "receiver",
         "data": {
           "requests": [
             {
-              "path": "/public/d7a41aaaff044a14958a9b90f8d429b6",
-              "authorization": "synthetic-d4d17535cc4748a48d9ad74a5f65e5c8"
+              "method": "GET",
+              "path": "/public/16baf87c4d3f4ea18d1cbd07cdf4b70c",
+              "headers": [
+                [
+                  "Accept-Encoding",
+                  "identity"
+                ],
+                [
+                  "Host",
+                  "127.0.0.1:55049"
+                ],
+                [
+                  "User-Agent",
+                  "Python-urllib/3.13"
+                ],
+                [
+                  "Authorization",
+                  "synthetic-60ac2e24c2ea48248dbfa2edbd49c690"
+                ],
+                [
+                  "Connection",
+                  "close"
+                ]
+              ],
+              "body": ""
             }
           ]
         }
@@ -1466,16 +1604,16 @@
     },
     "schema_version": 2,
     "context": {
-      "run_id": "0bef74b4974a4c3e8d0142e4fd64f789",
+      "run_id": "28b3e79e38cd4f699fe5b3e21d40bda0",
       "case_id": "proxy-normal-three",
       "attempt_id": "1",
-      "session_id": "d7a41aaaff044a14958a9b90f8d429b6"
+      "session_id": "16baf87c4d3f4ea18d1cbd07cdf4b70c"
     },
     "execution": {
       "status": "completed",
       "reset_status": "ok",
       "error": "",
-      "duration_ms": 246
+      "duration_ms": 209
     },
     "collection": {
       "response": {
@@ -1508,7 +1646,7 @@
         "kind": "impact",
         "type": "credential_received",
         "source": "receiver",
-        "expected": "synthetic-d4d17535cc4748a48d9ad74a5f65e5c8"
+        "expected": "synthetic-60ac2e24c2ea48248dbfa2edbd49c690"
       }
     ],
     "assertions": [

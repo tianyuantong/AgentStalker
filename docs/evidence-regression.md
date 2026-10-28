@@ -4,7 +4,7 @@
 
 The baseline `7d5748e` has two independent decision paths. The legacy runner treats no matching signatures as safe; the correlation engine treats empty events as not exploitable and MCP name collisions as exploited. Collection failures can look like empty results. Conversation replay has an unimplemented final assertion and can report success after failure.
 
-This change uses one decision core and three new production modules: `contracts.py`, `assertions.py`, `regression.py`. It keeps existing analysis and execution entry points. No business application, new rule DSL, gateway, database or external service is added. The original Chinese design is preserved in [design/plan-2026-09-20.zh.md](design/plan-2026-09-20.zh.md).
+This change uses one decision core and three new production modules: `contracts.py`, `assertions.py`, `regression.py`. It keeps existing analysis and execution entry points. No business application, new rule DSL, gateway, database or external service is added.
 
 ## Data and trust boundary
 
@@ -12,7 +12,7 @@ This change uses one decision core and three new production modules: `contracts.
 
 A collector status of `ok` differs from an empty snapshot. Each collector states its method and whether the observation window ended. The two fixture checks use a matching synchronous MCP response and a dedicated HTTP receiver. No timestamp-nearness inference is used. Temporary trees and receivers are recreated per case; no secret is supplied in the attack arguments. The SDK child receives a minimal environment with synthetic credentials.
 
-`assertions.py` checks protected marker return, credential receipt, normal response equality and credential absence. Checks return pass/fail/unknown with event references. A normal check passing never confirms exploitation. Unsupported names and malformed values cannot pass. Stored assertion results are recomputed from raw observations.
+`assertions.py` checks protected marker return, credential receipt (the synthetic value anywhere in a recorded request: URL, headers or body), normal response equality and credential absence. Checks return pass/fail/unknown with event references. A normal check passing never confirms exploitation. Unsupported names and malformed values cannot pass. Stored assertion results are recomputed from raw observations.
 
 ## Decision order
 
@@ -31,7 +31,7 @@ Rules R001–R011 are retained as signals, and the legacy runner's five heuristi
 - The runner now requires an explicit new output directory. Existing output is never replaced. The correlation CLI honors `--output` and also refuses overwrite.
 - The original `api_executor --attack-graph` CLI and side-effect probe method are retained. They report transport/task observations, not an unsupported safe/exploited verdict.
 - API/replay keep public class names. Context can be passed across turns; task assertions are separate from safety, unknown assertion types no longer pass, and errors propagate. Configure `session_field` when a target uses `conversation_id` instead of `session_id`.
-- MCP calls have response deadlines and child cleanup. Tool-level errors are execution errors. SDK v1 is bounded as `mcp<2` because the original fixture imports `mcp.server.fastmcp`.
+- MCP calls have response deadlines, a per-message frame cap applied while reading, and child cleanup. Tool-level errors are execution errors. SDK v1 is bounded as `mcp<2` because the original fixture imports `mcp.server.fastmcp`.
 - Nested packages and the evidence schema are included in the built wheel. The standalone `fastmcp` dependency was redundant and is no longer required.
 
 ## Paired runs and offline analysis

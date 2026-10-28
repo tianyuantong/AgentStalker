@@ -5,7 +5,7 @@
 **Agent** **St**atic + **A**ttack-graph + **L**ive-replay **K**ernel<br>
 把 LLM Agent 当作一个"待审计的系统"，而不是"待对齐的模型"。
 
-[![Python](https://img.shields.io/badge/python-3.11+-blue)](#快速开始) [![tests](https://img.shields.io/badge/tests-163%20passed-brightgreen)](#测试) [![CI](https://github.com/tianyuantong/AgentStalker/actions/workflows/tests.yml/badge.svg)](https://github.com/tianyuantong/AgentStalker/actions/workflows/tests.yml) [![OWASP](https://img.shields.io/badge/OWASP-ASI01--ASI10-purple)](#) [![license](https://img.shields.io/badge/license-authorized%20use-orange)](#致谢与许可)
+[![Python](https://img.shields.io/badge/python-3.11+-blue)](#快速开始) [![tests](https://img.shields.io/badge/tests-168%20passed-brightgreen)](#测试) [![CI](https://github.com/tianyuantong/AgentStalker/actions/workflows/tests.yml/badge.svg)](https://github.com/tianyuantong/AgentStalker/actions/workflows/tests.yml) [![OWASP](https://img.shields.io/badge/OWASP-ASI01--ASI10-purple)](#) [![license](https://img.shields.io/badge/license-authorized%20use-orange)](#致谢与许可)
 
 [English](README.md) · [设计说明](docs/evidence-regression.md) · [验证报告](docs/validation-20260920.md) · [审阅指南](docs/review-guide.zh.md) · [上游 README](docs/upstream-README.zh.md)
 
@@ -21,11 +21,11 @@ AgentStalker（[上游：Gach0ng](https://github.com/Gach0ng/AgentStalker)）把
 ## 亮点
 
 - **单一的证据门控判定核心。** 原来两条独立的判定路径（沙箱 runner 的签名规则、`VerdictEngine`）现在都走同一个 `judge()`。16 条信号规则（R001–R016）只负责"提出线索"，确认利用只能靠限定在本次 run/case/attempt/session 范围内的效果检查。已观察到的效果不会被之后的超时或拒绝抹掉；缺失的证据永远不会变成"安全"。
-- **用效果检查代替关键词匹配。** 受保护文件里放一个从不出现在任何提示词里的随机标记；本地接收端记录到底哪个合成凭据到了哪里。由 `protected_marker_returned` 和 `credential_received` 说了算，不看模型怎么措辞。
+- **用效果检查代替关键词匹配。** 受保护文件里放一个从不出现在任何提示词里的随机标记；本地接收端完整记录每个请求，每个用例新生成的合成凭据不论被放进 header、URL 还是 body 都会被查到。由 `protected_marker_returned` 和 `credential_received` 说了算，不看模型怎么措辞。
 - **修复前后配对回归。** 对易受攻击版本和修复版本各跑同一套 12 个用例再 `compare`：攻击效果 6/6 → 0/6，正常任务两侧都 6/6，公开请求的凭据泄露 3 → 0。把工具一关了之会被识别为功能回归；没有修复前的正向基线就不能宣称"修好了"。
 - **可复现的证据包。** 每次运行写一份 manifest：analyzer/collector/fixture 指纹、环境、每条记录的 SHA-256；输出目录只允许新建，重跑永远不会覆盖旧实验。`rejudge` 只对封存的证据包重新分析并记录来源，绝不重新执行目标；`compare` 拒绝任何在 suite、analyzer、collector、fixture、环境或声明修复上有差异的证据包。
-- **加固的执行器。** MCP stdio 调用有响应期限、1 MiB 帧上限和保证的子进程清理；HTTP 多轮执行共用一个 session 并传播每一处失败；对话回放终于实现了最终断言。
-- **163 个测试，上游是 76 个。** 新增的 87 个大多是负例和故障注入：空日志、采集器失效、观察窗口未完成、跨 run 事件、试图改写结论的 LLM 回调、损坏的证据包、路径逃逸、以及"把功能全禁掉"的伪修复。
+- **加固的执行器。** MCP stdio 调用有响应期限、读取时即生效的帧上限（每条消息 2^20 个字符）和保证的子进程清理；HTTP 多轮执行共用一个 session 并传播每一处失败；对话回放终于实现了最终断言。
+- **168 个测试，上游是 76 个。** 新增的 92 个大多是负例和故障注入：空日志、采集器失效、观察窗口未完成、跨 run 事件、试图改写结论的 LLM 回调、损坏的证据包、路径逃逸、"把功能全禁掉"的伪修复、被挪到其他 header / URL / body 里的凭据，以及永不结束的 MCP 帧。
 
 ## 结论怎么得出
 
@@ -132,12 +132,12 @@ python -m sandbox.regression rejudge output/before --output output/rejudged
 | MCP stdio 执行器 | 无上限的 `readline()` | 响应期限、帧上限、子进程清理 |
 | 多轮 HTTP | 每次 `execute()` 一个 session，轮次失败也报成功 | 上下文跨调用传递，每处失败都传播 |
 | 信号规则 | R001–R011（另有 5 条 runner 启发式） | R001–R016，`verdict_rules.yaml` 同步文档且有漂移测试 |
-| 测试 | 76 | 163 |
+| 测试 | 76 | 168 |
 
 ## 测试
 
 ```bash
-pytest tests -q -ra           # 163 个测试，约 20 秒，会拉起真实 MCP 子进程和本地接收端
+pytest tests -q -ra           # 168 个测试，约 20 秒，会拉起真实 MCP 子进程和本地接收端
 python -m build --wheel        # 嵌套包和 evidence schema 都打进 wheel
 ```
 

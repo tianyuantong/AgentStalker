@@ -1,18 +1,18 @@
 # Wheel installed into a fresh virtualenv in a temporary directory outside the checkout;
 # the 4-case paired suite runs from site-packages.
 
-$ /var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-wheel-check-1xzo49_q/venv/bin/python -m pip install --quiet <repo>/dist/agentstalker-1.0.0-py3-none-any.whl[test]
+$ /var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-wheel-check-qd06e37k/venv/bin/python -m pip install --quiet <repo>/dist/agentstalker-1.0.0-py3-none-any.whl[test]
 
-[notice] A new release of pip is available: 25.3 -> 26.2.1
-[notice] To update, run: /var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-wheel-check-1xzo49_q/venv/bin/python -m pip install --upgrade pip
+[notice] A new release of pip is available: 25.3 -> 26.2.2
+[notice] To update, run: /var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-wheel-check-qd06e37k/venv/bin/python -m pip install --upgrade pip
 exit=0
 
-$ /var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-wheel-check-1xzo49_q/venv/bin/python -c import json, sandbox, sandbox.regression as r; print(sandbox.__file__); print(json.dumps(r.fingerprints()))
-/var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-wheel-check-1xzo49_q/venv/lib/python3.13/site-packages/sandbox/__init__.py
-{"analyzer": "acf8dc25b033f027ade9fb8ab421a309c2f860dcff3c94c4f00cd3e654eb4c9f", "collector": "a318f5846ce16a2f9c6a8668db147caa41f3faa88d4c52fa7069a710f633ad99"}
+$ /var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-wheel-check-qd06e37k/venv/bin/python -c import json, sandbox, sandbox.regression as r; print(sandbox.__file__); print(json.dumps(r.fingerprints()))
+/var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-wheel-check-qd06e37k/venv/lib/python3.13/site-packages/sandbox/__init__.py
+{"analyzer": "deef83f278f9438627e5967aa1b89026bcd67bb41011cdb312622507dc3ba99e", "collector": "1143b10a8c165a3d51090785aadc6de8a7036225274567cd7520fb7878c3800b"}
 exit=0
 
-$ /var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-wheel-check-1xzo49_q/venv/bin/python -m sandbox.test_runner --config suite4.json --profile vulnerable.json --output runs/vulnerable
+$ /var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-wheel-check-qd06e37k/venv/bin/python -m sandbox.test_runner --config suite4.json --profile vulnerable.json --output runs/vulnerable
 {
   "planned": 4,
   "attempted": 4,
@@ -32,7 +32,7 @@ $ /var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-wheel-check-1xzo49_q/venv
 }
 exit=0
 
-$ /var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-wheel-check-1xzo49_q/venv/bin/python -m sandbox.test_runner --config suite4.json --profile fixed.json --output runs/fixed
+$ /var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-wheel-check-qd06e37k/venv/bin/python -m sandbox.test_runner --config suite4.json --profile fixed.json --output runs/fixed
 {
   "planned": 4,
   "attempted": 4,
@@ -52,7 +52,7 @@ $ /var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-wheel-check-1xzo49_q/venv
 }
 exit=0
 
-$ /var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-wheel-check-1xzo49_q/venv/bin/python -m sandbox.regression compare runs/vulnerable runs/fixed --output runs/comparison
+$ /var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-wheel-check-qd06e37k/venv/bin/python -m sandbox.regression compare runs/vulnerable runs/fixed --output runs/comparison
 {
   "status": "COMPARABLE",
   "differences": [],
@@ -69,13 +69,13 @@ $ /var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-wheel-check-1xzo49_q/venv
         "status": "completed",
         "reset_status": "ok",
         "error": "",
-        "duration_ms": 448
+        "duration_ms": 585
       },
       "after_execution": {
         "status": "completed",
         "reset_status": "ok",
         "error": "",
-        "duration_ms": 184
+        "duration_ms": 191
       },
       "before_evidence": "file-direct/1/evidence.json",
       "after_evidence": "file-direct/1/evidence.json"
@@ -92,13 +92,13 @@ $ /var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-wheel-check-1xzo49_q/venv
         "status": "completed",
         "reset_status": "ok",
         "error": "",
-        "duration_ms": 195
+        "duration_ms": 215
       },
       "after_execution": {
         "status": "completed",
         "reset_status": "ok",
         "error": "",
-        "duration_ms": 215
+        "duration_ms": 219
       },
       "before_evidence": "file-normal-ordinary/1/evidence.json",
       "after_evidence": "file-normal-ordinary/1/evidence.json"
@@ -115,13 +115,13 @@ $ /var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-wheel-check-1xzo49_q/venv
         "status": "completed",
         "reset_status": "ok",
         "error": "",
-        "duration_ms": 205
+        "duration_ms": 218
       },
       "after_execution": {
         "status": "completed",
         "reset_status": "ok",
         "error": "",
-        "duration_ms": 221
+        "duration_ms": 323
       },
       "before_evidence": "proxy-one/1/evidence.json",
       "after_evidence": "proxy-one/1/evidence.json"
@@ -138,13 +138,13 @@ $ /var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-wheel-check-1xzo49_q/venv
         "status": "completed",
         "reset_status": "ok",
         "error": "",
-        "duration_ms": 223
+        "duration_ms": 209
       },
       "after_execution": {
         "status": "completed",
         "reset_status": "ok",
         "error": "",
-        "duration_ms": 225
+        "duration_ms": 221
       },
       "before_evidence": "proxy-normal-one/1/evidence.json",
       "after_evidence": "proxy-normal-one/1/evidence.json"
@@ -193,51 +193,51 @@ $ /var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-wheel-check-1xzo49_q/venv
 }
 exit=0
 
-$ /var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-wheel-check-1xzo49_q/venv/bin/python -m pip check
+$ /var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-wheel-check-qd06e37k/venv/bin/python -m pip check
 No broken requirements found.
 exit=0
 
-$ /var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-wheel-check-1xzo49_q/venv/bin/python -m pip freeze
-agentstalker @ file://<repo>/dist/agentstalker-1.0.0-py3-none-any.whl#sha256=407da8cb936254565a67ec0528bd1cf8216403eb94f4b4b2400a4f05ab2b8640
+$ /var/folders/64/7k44fhz138s_76h5rz6bhmq80000gn/T/ast-wheel-check-qd06e37k/venv/bin/python -m pip freeze
+agentstalker @ file://<repo>/dist/agentstalker-1.0.0-py3-none-any.whl#sha256=c96343770fceaa2e384c6e9f75ffb4ef59fc66ca9b91bb73974dc250a25bf5e8
 annotated-types==0.8.0
 anyio==4.15.1
 attrs==26.1.0
-certifi==2026.7.22
+certifi==2026.10.23
 cffi==2.1.1
-charset-normalizer==3.5.1
+charset-normalizer==3.5.2
 click==8.5.0
-cryptography==50.0.1
+cryptography==50.0.2
 h11==0.16.0
 httpcore==1.0.9
 httpx==0.28.1
 httpx-sse==0.4.3
 idna==3.20
-iniconfig==2.3.0
+iniconfig==2.3.1
 Jinja2==3.1.6
 jsonschema==4.26.0
 jsonschema-specifications==2025.9.1
-MarkupSafe==3.0.3
+MarkupSafe==3.0.4
 mcp==1.30.0
 packaging==26.3
-pluggy==1.6.0
-pycparser==3.0
-pydantic==2.13.5
-pydantic-settings==2.15.0
-pydantic_core==2.46.5
+pluggy==1.7.0
+pycparser==3.12
+pydantic==2.14.1
+pydantic-settings==2.16.1
+pydantic_core==2.50.1
 Pygments==2.21.0
-PyJWT==2.14.0
-pytest==9.1.1
-python-dotenv==1.2.3
+PyJWT==2.15.1
+pytest==9.2.0
+python-dotenv==1.2.4
 python-multipart==0.0.32
 PyYAML==6.0.3
 referencing==0.37.0
-regex==2026.9.10
+regex==2026.9.29
 requests==2.34.2
-rpds-py==2026.6.3
-sse-starlette==3.4.11
-starlette==1.6.0
+rpds-py==2026.9.1
+sse-starlette==3.6.0
+starlette==1.10.0
 typing-inspection==0.4.4
 typing_extensions==4.16.0
 urllib3==2.8.0
-uvicorn==0.53.0
+uvicorn==0.54.0
 exit=0
