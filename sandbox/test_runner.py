@@ -238,14 +238,19 @@ def run_mcp_case(case, profile, run_id):
     records = []
     lock = threading.Lock()
     class Receiver(BaseHTTPRequestHandler):
-        def do_GET(self):
+        def _record(self):
+            # Keep the whole request: the credential check must not depend on where it was placed.
+            length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(length).decode("utf-8", "replace") if length else ""
             with lock:
-                records.append({"path": self.path, "authorization": self.headers.get("Authorization", "")})
+                records.append({"method": self.command, "path": self.path,
+                                "headers": [[name, value] for name, value in self.headers.items()], "body": body})
             data = b"public-content"
             self.send_response(200)
             self.send_header("Content-Length", str(len(data)))
             self.end_headers()
             self.wfile.write(data)
+        do_GET = do_POST = do_PUT = do_PATCH = do_DELETE = _record
         def log_message(self, *_args):
             pass
     server = ThreadingHTTPServer(("127.0.0.1", 0), Receiver)

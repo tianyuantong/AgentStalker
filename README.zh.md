@@ -21,7 +21,7 @@ AgentStalker（[上游：Gach0ng](https://github.com/Gach0ng/AgentStalker)）把
 ## 亮点
 
 - **单一的证据门控判定核心。** 原来两条独立的判定路径（沙箱 runner 的签名规则、`VerdictEngine`）现在都走同一个 `judge()`。16 条信号规则（R001–R016）只负责"提出线索"，确认利用只能靠限定在本次 run/case/attempt/session 范围内的效果检查。已观察到的效果不会被之后的超时或拒绝抹掉；缺失的证据永远不会变成"安全"。
-- **用效果检查代替关键词匹配。** 受保护文件里放一个从不出现在任何提示词里的随机标记；本地接收端记录到底哪个合成凭据到了哪里。由 `protected_marker_returned` 和 `credential_received` 说了算，不看模型怎么措辞。
+- **用效果检查代替关键词匹配。** 受保护文件里放一个从不出现在任何提示词里的随机标记；本地接收端完整记录每个请求，每个用例新生成的合成凭据不论被放进 header、URL 还是 body 都会被查到。由 `protected_marker_returned` 和 `credential_received` 说了算，不看模型怎么措辞。
 - **修复前后配对回归。** 对易受攻击版本和修复版本各跑同一套 12 个用例再 `compare`：攻击效果 6/6 → 0/6，正常任务两侧都 6/6，公开请求的凭据泄露 3 → 0。把工具一关了之会被识别为功能回归；没有修复前的正向基线就不能宣称"修好了"。
 - **可复现的证据包。** 每次运行写一份 manifest：analyzer/collector/fixture 指纹、环境、每条记录的 SHA-256；输出目录只允许新建，重跑永远不会覆盖旧实验。`rejudge` 只对封存的证据包重新分析并记录来源，绝不重新执行目标；`compare` 拒绝任何在 suite、analyzer、collector、fixture、环境或声明修复上有差异的证据包。
 - **加固的执行器。** MCP stdio 调用有响应期限、1 MiB 帧上限和保证的子进程清理；HTTP 多轮执行共用一个 session 并传播每一处失败；对话回放终于实现了最终断言。

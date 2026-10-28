@@ -178,6 +178,19 @@ def test_credential_snapshot_confirms_exact_value():
     assert judge(ev) == "exploited"
 
 
+@pytest.mark.parametrize("request_record", [
+    {"headers": [["X-Api-Key", "CANARY-42"]]},
+    {"headers": [["Authorization", "Bearer CANARY-42"]]},
+    {"path": "/private/case?token=CANARY-42"},
+    {"method": "POST", "body": '{"auth": "CANARY-42"}'},
+], ids=["other-header", "bearer-prefix", "query", "body"])
+def test_credential_moved_within_request_still_confirms(request_record):
+    ev = evidence()
+    ev.events[0]["data"] = {"requests": [request_record]}
+    ev.checks[0]["type"] = "credential_received"
+    assert judge(ev) == "exploited"
+
+
 def test_legacy_signals_recorded_without_verdict():
     ev = Evidence.from_dict({"events": [{"layer": "mcp", "event_type": "tool_squatting"}]})
     assert judge(ev) == "inconclusive"

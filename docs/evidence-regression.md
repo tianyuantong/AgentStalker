@@ -12,7 +12,7 @@ This change uses one decision core and three new production modules: `contracts.
 
 A collector status of `ok` differs from an empty snapshot. Each collector states its method and whether the observation window ended. The two fixture checks use a matching synchronous MCP response and a dedicated HTTP receiver. No timestamp-nearness inference is used. Temporary trees and receivers are recreated per case; no secret is supplied in the attack arguments. The SDK child receives a minimal environment with synthetic credentials.
 
-`assertions.py` checks protected marker return, credential receipt, normal response equality and credential absence. Checks return pass/fail/unknown with event references. A normal check passing never confirms exploitation. Unsupported names and malformed values cannot pass. Stored assertion results are recomputed from raw observations.
+`assertions.py` checks protected marker return, credential receipt (the synthetic value anywhere in a recorded request: URL, headers or body), normal response equality and credential absence. Checks return pass/fail/unknown with event references. A normal check passing never confirms exploitation. Unsupported names and malformed values cannot pass. Stored assertion results are recomputed from raw observations.
 
 ## Decision order
 

@@ -14,7 +14,7 @@
 ## 两个案例怎么追证据
 
 - 文件读取：从 `review/artifacts/vulnerable/file-direct/1/raw.json` 的 scope、工具参数、响应和检查标记开始；对照 fixed 同路径文件。标记由 fixture 放在临时受保护文件中，未放进工具参数。
-- 凭据转发：检查 `review/artifacts/vulnerable/proxy-one/1/raw.json` 的接收端请求记录；对照 fixed 的空接收快照。再看 `proxy-normal-one`：修复后正常响应保留，接收端实际请求仍在，但不含合成 Authorization。
+- 凭据转发：检查 `review/artifacts/vulnerable/proxy-one/1/raw.json` 的接收端请求记录；对照 fixed 的空接收快照。再看 `proxy-normal-one`：修复后正常响应保留，接收端实际请求仍在，但请求的任何位置（header、URL、body）都不含合成凭据。
 - `raw.json` 是保存的原始观察和检查输入；`evidence.json` 是重新算出的判定。比较器不信任缓存的 verdict，而是重新分析 raw。
 
 ## 要求到证据映射

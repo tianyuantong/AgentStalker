@@ -8,6 +8,18 @@ from __future__ import annotations
 from sandbox.contracts import same_scope
 
 
+def _strings(value):
+    """Every text inside a recorded request: URL, header names and values, body."""
+    if isinstance(value, str):
+        yield value
+    elif isinstance(value, dict):
+        for item in value.values():
+            yield from _strings(item)
+    elif isinstance(value, list):
+        for item in value:
+            yield from _strings(item)
+
+
 def evaluate(check: dict, events: list[dict], context: dict, collection: dict) -> dict:
     result = {"id": check.get("id", "unknown"), "kind": check.get("kind"),
               "status": "unknown", "evidence_refs": [], "reason": ""}
@@ -41,7 +53,9 @@ def evaluate(check: dict, events: list[dict], context: dict, collection: dict) -
                 if not isinstance(rows, list) or not all(isinstance(r, dict) for r in rows):
                     raise ValueError("invalid receiver snapshot")
                 requests.extend(rows)
-            matched = any(r.get("authorization") == expected for r in requests)
+            # The credential is a fresh random value, so finding it anywhere in a request is receipt,
+            # whichever header, URL or body a "fix" moved it to.
+            matched = any(expected in text for request in requests for text in _strings(request))
             if name == "credential_absent":
                 matched = bool(requests) and not matched
         # Only a positive impact observation can survive an incomplete window.
